@@ -130,11 +130,16 @@
     (function(){
       var checks = [
         { name: "Home page", url: "./index.html", expect: [200] },
-        { name: "App page", url: "./app.html?v=20260427fourfix01", expect: [200] },
-        { name: "App script", url: "./app.js?v=20260427fourfix01", expect: [200] },
-        { name: "Styles", url: "./styles.css?v=20260427fourfix01", expect: [200] },
+        { name: "App page", url: "./app.html?v=20260427aifix01", expect: [200] },
+        { name: "App script", url: "./app.js?v=20260427aifix01", expect: [200] },
+        { name: "Styles", url: "./styles.css?v=20260427claimwhite01", expect: [200] },
         { name: "AI health", url: "/.netlify/functions/ai-health", expect: [200] },
         { name: "AI smoke test", url: "/.netlify/functions/ai-smoke-test", expect: [200] },
+        { name: "AI CV POST", url: "/.netlify/functions/generate-cv", method: "POST", expect: [200], body: { data: { name: "Test User", phone: "07000000000", email: "test@example.com", address: "United Kingdom", roles: [{ title: "Data Analyst", employer: "Example Ltd", start: "2022", end: "2024", duties: ["Built dashboards", "Analysed reports"] }], jobDescription: "Data analyst role using SQL, Excel, and Power BI.", skills: ["SQL", "Excel", "Power BI"] } } },
+        { name: "AI Cover Letter POST", url: "/.netlify/functions/generate-cover-letter", method: "POST", expect: [200], body: { jobTitle: "Data Analyst", company: "Example Ltd", jobDescription: "Analyse data, build dashboards, and explain insights.", cvText: "Data analyst with SQL, Excel, and Power BI experience.", coverLetterName: "Test User", wordRange: "300-500" } },
+        { name: "AI Career POST", url: "/.netlify/functions/career-path-planner", method: "POST", expect: [200], body: { goal: "Become a data analyst in the UK", localSteps: ["Build a SQL portfolio"], localCertifications: ["Power BI"], localChannels: ["LinkedIn"] } },
+        { name: "AI Interview POST", url: "/.netlify/functions/generate-interview-questions", method: "POST", expect: [200], body: { company: "Example Ltd", jobDescription: "Data analyst role using SQL and Power BI." } },
+        { name: "Rex Chat POST", url: "/.netlify/functions/chat-with-rex", method: "POST", expect: [200], body: { message: "Help me answer tell me about yourself for a data analyst interview.", messages: [] } },
         { name: "Admin users function", url: "/.netlify/functions/admin-users", expect: [200, 401, 403] }
       ];
       var grid = document.getElementById("diagnosticsGrid");
@@ -182,12 +187,20 @@
       async function runOne(check){
         var response, text, json, ok, message;
         try {
-          response = await fetch(check.url, { cache: "no-store" });
+          response = await fetch(check.url, {
+            method: check.method || "GET",
+            cache: "no-store",
+            headers: check.body ? { "content-type": "application/json" } : {},
+            body: check.body ? JSON.stringify(check.body) : undefined
+          });
           text = await response.text();
           try { json = JSON.parse(text); } catch (error) { json = null; }
           ok = check.expect.indexOf(response.status) !== -1;
           if(json){
             message = JSON.stringify(json, null, 2);
+            if(json && json.ok === false){
+              ok = false;
+            }
           } else {
             message = text ? text.slice(0, 700) : response.statusText || "No response body.";
           }

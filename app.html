@@ -5,7 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Job Match Agent</title>
-  <link rel="stylesheet" href="./styles.css?v=20260427fourfix01">
+  <link rel="stylesheet" href="./styles.css?v=20260427claimwhite01">
   <script>
     window.JOB_MATCH_LOCAL_UNLOCK_PREMIUM = false;
   </script>
@@ -1875,9 +1875,9 @@
         var waiting = false;
         function getApiBase(){
           try {
-            return /^https?:/i.test(String(window.location.protocol || "")) ? "" : "https://peaceful-moonbeam-14bcaf.netlify.app";
+            return /^https?:/i.test(String(window.location.protocol || "")) ? "" : "https://job-match-agent-web.netlify.app";
           } catch (error) {
-            return "https://peaceful-moonbeam-14bcaf.netlify.app";
+            return "https://job-match-agent-web.netlify.app";
           }
         }
         function trimVisaText(value){
@@ -2170,7 +2170,7 @@
           }
           setStatus("Searching...", "neutral");
           try{
-            base = (function(){ try { var protocol = String(window.location.protocol || ""); var host = String(window.location.hostname || "").toLowerCase(); if(protocol.indexOf("http") !== 0 || host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0"){ return "https://peaceful-moonbeam-14bcaf.netlify.app"; } return ""; } catch(error){ return "https://peaceful-moonbeam-14bcaf.netlify.app"; } })();
+            base = (function(){ try { var protocol = String(window.location.protocol || ""); var host = String(window.location.hostname || "").toLowerCase(); if(protocol.indexOf("http") !== 0 || host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0"){ return "https://job-match-agent-web.netlify.app"; } return ""; } catch(error){ return "https://job-match-agent-web.netlify.app"; } })();
             controller = window.AbortController ? new AbortController() : null;
             timer = controller ? setTimeout(function(){ controller.abort(); }, 8000) : null;
             response = await fetch(base + "/.netlify/functions/find-sponsored-jobs", {
@@ -2318,7 +2318,7 @@
           status.innerHTML = text;
         }
         function getCareerPlannerBase(){
-          return /^https?:/i.test(String(window.location.protocol || "")) ? "" : "https://peaceful-moonbeam-14bcaf.netlify.app";
+          return /^https?:/i.test(String(window.location.protocol || "")) ? "" : "https://job-match-agent-web.netlify.app";
         }
         function buildPlan(goal){
           var lower = String(goal || "").toLowerCase();
@@ -3388,7 +3388,7 @@
         function getCoverLetterApiBase(){
           var protocol = String(window.location && window.location.protocol || "");
           if(protocol.indexOf("http") === 0){ return ""; }
-          return "https://peaceful-moonbeam-14bcaf.netlify.app";
+          return "https://job-match-agent-web.netlify.app";
         }
         async function callDirectGeminiCoverLetter(data){
           var response;
@@ -4394,9 +4394,9 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="./ai-session-memory.js?v=20260417aiwhole11"></script>
-<script src="./app.js?v=20260427fourfix01"></script>
+<script src="./app.js?v=20260427panelock02"></script>
     <script src="./career-path-library.js?v=20260417career50clean01"></script>
-    <script src="./cv-generator.js?v=20260417cvsource04"></script>
+    <script src="./cv-generator.js?v=20260427aifix01"></script>
     <script>
       (function(){
         function daysState(){
@@ -4927,6 +4927,7 @@
     </script>
 </body>
 </html>
+
 
 
 

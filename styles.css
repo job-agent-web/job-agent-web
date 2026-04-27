@@ -374,7 +374,14 @@ body::after {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, var(--accent-4), #00b894) !important;
   color: #ffffff !important;
+  box-shadow: 0 14px 28px rgba(17, 32, 59, 0.16);
+}
+
+#claimWeeklyDayBtn:disabled {
+  color: #ffffff !important;
+  opacity: 0.78;
 }
 
 .hero-chip {

@@ -38,7 +38,7 @@
   function esc(value){return String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
   function unique(arr){var seen={},out=[],i,key;for(i=0;i<arr.length;i+=1){key=low(trim(arr[i]));if(!key||seen[key]){continue;}seen[key]=true;out.push(trim(arr[i]));}return out;}
   function isHostedHttpMode(){try{return /^https?:/i.test(String(window.location.protocol||""));}catch(e){return false;}}
-  function getCvGenerationApiBase(){return isHostedHttpMode()?"":"https://peaceful-moonbeam-14bcaf.netlify.app";}
+  function getCvGenerationApiBase(){return isHostedHttpMode()?"":"https://job-match-agent-web.netlify.app";}
   function loadPreferredAiModel(){var raw="";try{raw=window.localStorage.getItem("jobMatchAgentOpenAiModel")||"";}catch(e){raw="";}raw=trim(raw);if(!raw||/^gpt-/i.test(raw)){return "gemini-2.5-flash-lite";}return raw;}
   function getAiHistory(){try{return window.jobMatchAiSessionMemory&&window.jobMatchAiSessionMemory.buildAvoidanceText?window.jobMatchAiSessionMemory.buildAvoidanceText("cv-builder"):"";}catch(e){return "";}}
   function aiProviderLabel(source,model){source=trim(source||"").toLowerCase();model=trim(model||loadPreferredAiModel());if(source==="gemini"||source==="browser-gemini"){return "Gemini"+(model?" - "+model:"");}if(source==="gptoss"||source==="gpt-oss"){return "GPT-OSS"+(model?" - "+model:"");}if(source==="cloudflare"){return "Cloudflare AI"+(model?" - "+model:"");}if(source==="huggingface"){return "Hugging Face"+(model?" - "+model:"");}if(source==="desktop"){return "Desktop OpenAI"+(model?" - "+model:"");}if(source==="hosted"){return "Hosted AI"+(model?" - "+model:"");}return model||"AI provider";}
@@ -221,6 +221,7 @@
   function escapeXml(text){return String(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
   publishGeneratedCv();
 })();
+
 
 
 
