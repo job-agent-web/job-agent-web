@@ -5,7 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Job Match Agent</title>
-<link rel="stylesheet" href="./styles.css?v=20260427claimbutton02">
+<link rel="stylesheet" href="./styles.css?v=20260427claimbutton04">
   <script>
     window.JOB_MATCH_LOCAL_UNLOCK_PREMIUM = false;
   </script>
@@ -626,7 +626,7 @@
       <div class="hero-copy">
         <div class="hero-topline">
           <button id="themeToggleBtn" class="theme-toggle-button" type="button" aria-pressed="false">Dark Mode</button>
-          <button id="claimWeeklyDayBtn" class="ghost-button small-button" type="button" onclick="if(window.claimWeeklyFreeDay){window.claimWeeklyFreeDay();}else{var s=document.getElementById('claimWeeklyDayStatus');if(s){s.hidden=false;s.removeAttribute('hidden');s.className='auth-status claim-weekly-day-status warn';s.innerHTML='Free-day claim is still loading. Refresh and try again.';}}return false;">Claim 1 Free Day</button>
+          <button id="claimWeeklyDayBtn" class="ghost-button small-button" type="button" onclick="if(window.jobMatchClaimWeeklyFreeDayClick){window.jobMatchClaimWeeklyFreeDayClick();}return false;">Claim 1 Free Day</button>
           <button id="choosePlanBtn" class="ghost-button small-button" type="button" onclick="(function(){var modal=document.getElementById('limitModal');var title=document.getElementById('limitModalTitle');var text=document.getElementById('limitModalText');var status=document.getElementById('limitModalStatus');if(title){title.innerHTML='Choose a plan';}if(text){text.innerHTML='Choose the plan you want to use. Click the 10 pounds monthly card to pay with Revolut.';}if(status){status.className='auth-status neutral';status.innerHTML='Choose a monthly, 6-month, yearly, or lifetime plan.';}if(modal){modal.hidden=false;modal.removeAttribute('hidden');modal.style.display='grid';}if(window.jobMatchOpenPlanChooser){window.jobMatchOpenPlanChooser();}})();return false;">Choose Plan</button>
         </div>
         <h1>Job Match Agent</h1>
@@ -642,6 +642,83 @@
         <button id="signOutBtn" class="ghost-button small-button" type="button">Sign Out</button>
       </div>
       <p id="claimWeeklyDayStatus" class="auth-status claim-weekly-day-status neutral" hidden></p>
+      <script>
+        (function(){
+          function esc(value){
+            return String(value == null ? "" : value).replace(/[&<>"']/g, function(ch){
+              return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch];
+            });
+          }
+          function parseJson(value, fallback){
+            try { return value ? JSON.parse(value) : fallback; } catch (error) { return fallback; }
+          }
+          function readStorage(key, fallback){
+            try { return window.localStorage ? parseJson(window.localStorage.getItem(key), fallback) : fallback; } catch (error) { return fallback; }
+          }
+          function writeStorage(key, value){
+            try { if(window.localStorage){ window.localStorage.setItem(key, JSON.stringify(value)); } } catch (error) {}
+          }
+          function status(tone, text){
+            var node = document.getElementById("claimWeeklyDayStatus");
+            if(!node){ return; }
+            node.hidden = !text;
+            if(text){ node.removeAttribute("hidden"); }
+            node.className = "auth-status claim-weekly-day-status " + (tone || "neutral");
+            node.innerHTML = esc(text || "");
+          }
+          function currentEmail(session){
+            return String(session && session.email || "").trim().toLowerCase();
+          }
+          function updateVisibleDays(){
+            var summary = document.getElementById("accountSummary");
+            var text = summary ? String(summary.textContent || summary.innerText || "") : "";
+            var next = text.replace(/(\d+)\s+day(s?)\s+left/i, function(match, n){
+              var value = Math.max(0, Number(n || 0) || 0) + 1;
+              return value + " day" + (value === 1 ? "" : "s") + " left";
+            });
+            if(summary && next && next !== text){ summary.innerHTML = esc(next); }
+          }
+          window.jobMatchClaimWeeklyFreeDayClick = function(){
+            var session = readStorage("jobMatchAgentHostedSession", null);
+            var email = currentEmail(session);
+            var usage = readStorage("jobMatchAgentHostedUsage", {});
+            var userUsage;
+            var now = new Date().toISOString();
+            var btn = document.getElementById("claimWeeklyDayBtn");
+            if(window.claimWeeklyFreeDay && window.claimWeeklyFreeDay !== window.jobMatchClaimWeeklyFreeDayClick){
+              window.claimWeeklyFreeDay();
+              return false;
+            }
+            if(!email){
+              status("warn", "Sign in before claiming one free day.");
+              return false;
+            }
+            userUsage = usage[email] || {};
+            userUsage.weeklyBonusDays = Math.max(0, Number(userUsage.weeklyBonusDays || userUsage.weekly_bonus_days || 0) || 0) + 1;
+            userUsage.weekly_bonus_days = userUsage.weeklyBonusDays;
+            userUsage.weeklyFreeDayClaimedAt = now;
+            userUsage.weekly_free_day_claimed_at = now;
+            userUsage.weeklyClaimPlanType = userUsage.weeklyClaimPlanType || userUsage.weekly_claim_plan_type || userUsage.planType || userUsage.plan_type || "";
+            userUsage.weekly_claim_plan_type = userUsage.weeklyClaimPlanType;
+            usage[email] = userUsage;
+            writeStorage("jobMatchAgentHostedUsage", usage);
+            if(session){
+              session.weeklyBonusDays = userUsage.weeklyBonusDays;
+              session.weeklyFreeDayClaimedAt = now;
+              session.weekly_claim_plan_type = userUsage.weeklyClaimPlanType;
+              writeStorage("jobMatchAgentHostedSession", session);
+            }
+            updateVisibleDays();
+            if(btn){
+              btn.textContent = "1 Free Day Claimed";
+              btn.disabled = true;
+              btn.title = "This week's free day has been claimed.";
+            }
+            status("good", "One free day has been added to your remaining access.");
+            return false;
+          };
+        })();
+      </script>
         <div id="accountBalances" class="account-balances"></div>
         <div class="manual-grid scraper-input-grid hero-search-grid">
           <label>
@@ -4317,7 +4394,7 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="./ai-session-memory.js?v=20260417aiwhole11"></script>
-<script src="./app.js?v=20260427claimbutton03"></script>
+<script src="./app.js?v=20260427claimbutton04"></script>
     <script src="./career-path-library.js?v=20260417career50clean01"></script>
     <script src="./cv-generator.js?v=20260417cvsource04"></script>
     <script>
