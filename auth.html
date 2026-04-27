@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Match Agent Access</title>
+  <link rel="stylesheet" href="./styles.css?v=20260407authpage">
+</head>
+<body class="auth-page">
+  <div class="page-shell auth-page-shell">
+    <section class="auth-shell">
+      <article class="auth-card">
+        <p class="card-label">Hosted Access</p>
+        <h1 class="auth-title">Create an account or sign in</h1>
+        <p class="hero-text auth-copy">
+          Access the hosted Job Match Agent here first. New users get 5 free job matches before upgrading.
+        </p>
+        <div class="auth-tabs">
+          <button id="showRegisterBtn" class="primary-button small-button" type="button">Register</button>
+          <button id="showSigninBtn" class="ghost-button small-button" type="button">Sign In</button>
+        </div>
+        <form id="registerForm" class="auth-form">
+          <label>
+            Full name
+            <input id="registerName" type="text" placeholder="Valentine Imasuen">
+          </label>
+          <label>
+            Email
+            <input id="registerEmail" type="email" placeholder="name@example.com">
+          </label>
+          <label>
+            Password
+            <input id="registerPassword" type="password" placeholder="Create a password">
+          </label>
+          <button class="primary-button" type="submit">Create account</button>
+        </form>
+        <form id="signinForm" class="auth-form" hidden>
+          <label>
+            Email
+            <input id="signinEmail" type="email" placeholder="name@example.com">
+          </label>
+          <label>
+            Password
+            <input id="signinPassword" type="password" placeholder="Enter your password">
+          </label>
+          <button class="primary-button" type="submit">Sign in</button>
+        </form>
+        <div id="authStatus" class="auth-status neutral">Register or sign in to continue to the main platform.</div>
+      </article>
+
+      <article class="auth-card paywall-card">
+        <p class="card-label">Pricing</p>
+        <h2>Free trial, then upgrade</h2>
+        <p class="helper-text auth-copy">
+          After 5 successful job matches, the hosted website will ask the user to move to a paid plan.
+        </p>
+        <div class="pricing-grid">
+          <article class="pricing-card">
+            <h3>Monthly</h3>
+            <p class="price-tag">GBP 9.99<span>/month</span></p>
+            <p>Flexible access while actively applying for jobs.</p>
+          </article>
+          <article class="pricing-card featured">
+            <h3>Lifetime</h3>
+            <p class="price-tag">GBP 39<span> one-off</span></p>
+            <p>One account, permanent hosted access.</p>
+          </article>
+        </div>
+        <div class="paywall-actions">
+          <button id="unlockPremiumBtn" class="primary-button" type="button">Unlock Premium Demo</button>
+        </div>
+        <div id="paymentStatus" class="auth-status neutral">Upgrade can be enabled here for hosted-site testing.</div>
+      </article>
+    </section>
+  </div>
+
+  <script src="./auth.js?v=20260407authpage"></script>
+</body>
+</html>

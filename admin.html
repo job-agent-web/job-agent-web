@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Match Agent Admin</title>
+<link rel="stylesheet" href="./styles.css?v=20260426hostedfix05">
+</head>
+<body class="auth-page admin-page">
+  <div class="page-shell auth-page-shell">
+    <section class="auth-shell">
+      <article class="auth-card" id="adminAccessCard">
+        <p class="card-label">Job Match Agent</p>
+        <h1 class="auth-title">Admin passkey</h1>
+        <form id="adminAccessForm" class="auth-form">
+          <label>
+            Passkey
+            <input id="adminSecret" type="password" placeholder="Enter your passkey">
+          </label>
+          <button class="primary-button" type="submit">Continue</button>
+        </form>
+        <div id="adminStatus" class="auth-status neutral">Enter your passkey to continue.</div>
+      </article>
+
+      <article class="auth-card" id="adminToolsPanel" hidden>
+        <div class="section-title">
+          <h2>Super admin tools</h2>
+        </div>
+        <p class="helper-text auth-copy">
+          Create hosted users, delete users, grant extra usage above the default limits, reset allowances, and switch plan access.
+        </p>
+        <div class="manual-grid">
+          <label>
+            User name
+            <input id="adminNewUserName" type="text" placeholder="Enter a user name">
+          </label>
+          <label>
+            Email
+            <input id="adminNewUserEmail" type="email" placeholder="name@example.com">
+          </label>
+          <label>
+            Password
+            <input id="adminNewUserPassword" type="password" placeholder="Use at least 8 characters">
+          </label>
+          <label>
+            Role
+            <select id="adminNewUserRole">
+              <option value="user" selected>User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
+        </div>
+        <div class="letter-controls">
+          <button id="jumpAdminGeneratorBtn" class="ghost-button" type="button">Admin Cover Letter Logic</button>
+          <button id="addAdminUserBtn" class="primary-button" type="button">Add hosted user</button>
+          <button id="resetAllAdminUsageBtn" class="ghost-button" type="button">Reset all usage</button>
+          <button id="setAllAdminFreeBtn" class="ghost-button" type="button">Set all to free</button>
+          <button id="setAllAdminPremiumBtn" class="ghost-button" type="button">Set all to premium</button>
+        </div>
+      </article>
+
+      <article class="auth-card" id="adminAiModelPanel" hidden>
+        <div class="section-title">
+          <h2>AI Model Indicator</h2>
+        </div>
+        <p class="helper-text auth-copy">
+          This shows the AI route currently configured in the platform code. Netlify environment variables are private, so the displayed Gemini model is the code default unless GEMINI_MODEL is changed in Netlify.
+        </p>
+        <div class="admin-table-wrap ai-model-indicator-wrap">
+          <table class="admin-table ai-model-indicator-table">
+            <thead>
+              <tr>
+                <th>Pane</th>
+                <th>Current AI route</th>
+                <th>Fallback / note</th>
+              </tr>
+            </thead>
+            <tbody id="adminAiModelTableBody">
+              <tr><td colspan="3">Loading AI model routing...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+      <article class="auth-card collapsed-panel" id="adminGeneratorPanel" hidden>
+        <button id="adminGeneratorToggleBtn" class="section-toggle" type="button" aria-expanded="false">
+          <span>Admin Cover Letter Logic</span>
+          <span id="adminGeneratorToggleIcon">+</span>
+        </button>
+        <div id="adminGeneratorPanelBody" hidden>
+          <div class="section-title">
+            <h2>Admin Cover Letter Logic</h2>
+            <div class="letter-controls">
+              <button id="previewAdminGeneratorConfigBtn" class="ghost-button" type="button">Preview Generated Letter</button>
+              <button id="saveAdminGeneratorConfigBtn" class="primary-button" type="button">Save Logic</button>
+              <button id="restoreAdminGeneratorConfigBtn" class="ghost-button" type="button">Restore Last Saved Logic</button>
+              <button id="resetAdminGeneratorConfigBtn" class="ghost-button" type="button">Reset Logic</button>
+            </div>
+          </div>
+          <p class="helper-text auth-copy">
+            Change the reusable cover letter generator logic here. These rules affect future generated drafts across the hosted app.
+          </p>
+          <div class="manual-grid">
+            <label>
+              Opening focus
+              <textarea id="adminGeneratorIntroTemplate" rows="5" placeholder="Set the opening logic and emphasis for generated cover letters."></textarea>
+            </label>
+            <label>
+              Strength themes
+              <textarea id="adminGeneratorStrengthTemplate" rows="5" placeholder="Set the repeated strengths and role themes to emphasise."></textarea>
+            </label>
+            <label>
+              NHS tone rule
+              <textarea id="adminGeneratorNhsTemplate" rows="5" placeholder="Set the NHS-specific tone and service emphasis."></textarea>
+            </label>
+            <label>
+              Civil Service tone rule
+              <textarea id="adminGeneratorCivilTemplate" rows="5" placeholder="Set the Civil Service-specific tone and behaviours emphasis."></textarea>
+            </label>
+            <label>
+              Closing logic
+              <textarea id="adminGeneratorClosingTemplate" rows="5" placeholder="Set the closing message and call to action."></textarea>
+            </label>
+          </div>
+          <div class="admin-generator-preview">
+            <div class="section-title">
+              <h3>Preview</h3>
+            </div>
+            <div id="adminGeneratorPreview" class="generator-preview-box">
+              Preview a generated letter here before saving logic changes.
+            </div>
+          </div>
+          <div id="adminGeneratorConfigStatus" class="auth-status neutral">Save logic here to shape future generated cover letters on the hosted app.</div>
+        </div>
+      </article>
+
+      <article class="auth-card" id="adminPanel" hidden>
+        <div class="section-title">
+          <h2>Users</h2>
+          <div class="letter-controls">
+            <button id="exportAdminBtn" class="ghost-button" type="button">Download Excel</button>
+            <button id="refreshAdminBtn" class="ghost-button" type="button">Refresh</button>
+            <button id="signOutAdminBtn" class="ghost-button" type="button">Log out</button>
+          </div>
+        </div>
+        <label>
+          Search users
+          <input id="adminSearchInput" type="text" placeholder="Search by user name or email">
+        </label>
+        <div id="adminSummary" class="summary-bar empty-state">No user data loaded yet.</div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Signed up</th>
+                <th>Last sign in</th>
+                <th>Subscription</th>
+                <th>Days remaining</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody">
+              <tr><td colspan="7">Load the monitor to see users here.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </div>
+
+<script src="./admin.js?v=20260426hostedfix05"></script>
+</body>
+</html>
+
+
+

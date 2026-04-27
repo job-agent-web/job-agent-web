@@ -1,0 +1,22 @@
+{
+  "id": "platform_template",
+  "name": "Sample Job Platform",
+  "searchUrlTemplate": "https://example.com/jobs?q={{jobTitle}}&l={{location}}",
+  "itemPattern": "<article[\\s\\S]*?<\\/article>",
+  "itemFlags": "gi",
+  "maxResults": 10,
+  "fields": {
+    "title": "<h2[^>]*>([\\s\\S]*?)<\\/h2>",
+    "company": "company[^>]*>([\\s\\S]*?)<",
+    "location": "location[^>]*>([\\s\\S]*?)<",
+    "salary": "salary[^>]*>([\\s\\S]*?)<",
+    "description": "summary[^>]*>([\\s\\S]*?)<"
+  },
+  "fieldFlags": {
+    "title": "i",
+    "company": "i",
+    "location": "i",
+    "salary": "i",
+    "description": "i"
+  }
+}

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Match Agent Access</title>
+  <link rel="stylesheet" href="./styles.css?v=20260407authroot">
+</head>
+<body class="auth-page">
+  <div class="page-shell auth-page-shell">
+    <section class="auth-shell">
+      <article class="auth-card">
+        <p class="card-label">Hosted Access</p>
+        <h1 class="auth-title">Sign up or sign in</h1>
+        <p class="hero-text auth-copy">
+          Access the local preview here first. New users get 5 free matches and 15 free searches before upgrading.
+        </p>
+        <div class="auth-tabs">
+          <button id="showRegisterBtn" class="primary-button small-button" type="button">Sign Up</button>
+          <button id="showSigninBtn" class="ghost-button small-button" type="button">Sign In</button>
+        </div>
+        <form id="registerForm" class="auth-form" hidden>
+          <label>
+            User name
+            <input id="registerName" type="text" placeholder="">
+          </label>
+          <label>
+            Email
+            <input id="registerEmail" type="email" placeholder="name@example.com">
+          </label>
+          <label>
+            Password
+            <input id="registerPassword" type="password" placeholder="Create a password">
+          </label>
+          <label>
+            Re-enter password
+            <input id="registerPasswordConfirm" type="password" placeholder="Re-enter your password">
+          </label>
+          <button class="primary-button" type="submit">Sign Up</button>
+        </form>
+        <form id="otpForm" class="auth-form" hidden>
+          <label>
+            Enter OTP
+            <input id="otpCode" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit code">
+          </label>
+          <div class="otp-actions">
+            <button id="resendOtpBtn" class="ghost-button" type="button">Resend OTP in 60s</button>
+          </div>
+          <div class="otp-actions">
+            <button id="verifyOtpBtn" class="primary-button" type="submit">Verify OTP</button>
+            <button id="cancelOtpBtn" class="ghost-button" type="button">Cancel</button>
+          </div>
+        </form>
+        <form id="signinForm" class="auth-form" hidden>
+          <label>
+            Email or username
+            <input id="signinEmail" type="text" placeholder="name@example.com or username">
+          </label>
+          <label>
+            Password
+            <input id="signinPassword" type="password" placeholder="Enter your password">
+          </label>
+          <label class="auth-check">
+            <input id="keepSignedIn" type="checkbox">
+            <span>Keep me signed in</span>
+          </label>
+          <button class="primary-button" type="submit">Sign in</button>
+          <button id="showForgotPasswordBtn" class="ghost-button" type="button">Forgot password</button>
+        </form>
+        <form id="resetRequestForm" class="auth-form" hidden>
+          <label>
+            Email
+            <input id="resetEmail" type="email" placeholder="name@example.com">
+          </label>
+          <label>
+            New password
+            <input id="resetPassword" type="password" placeholder="Enter a new password">
+          </label>
+          <div class="otp-actions">
+            <button id="sendResetOtpBtn" class="primary-button" type="submit">Send Reset OTP</button>
+            <button id="cancelResetBtn" class="ghost-button" type="button">Cancel</button>
+          </div>
+        </form>
+        <div id="authStatus" class="auth-status neutral">Choose sign up or sign in to continue to the main platform.</div>
+      </article>
+
+      <article class="auth-card paywall-card">
+        <p class="card-label">Pricing</p>
+        <h2>Available plans</h2>
+        <p class="helper-text auth-copy">
+          Every new user receives 1 week of free access to the platform before choosing a paid plan.
+        </p>
+        <div class="pricing-grid">
+          <article id="authMonthlyPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 10 pounds with Revolut">
+            <h3>Monthly</h3>
+            <p class="price-tag">£10<span> monthly</span></p>
+          </article>
+          <article id="authSixMonthPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 50 pounds with Revolut">
+            <h3>6 Months</h3>
+            <p class="price-tag">£50<span> 6 months</span></p>
+          </article>
+          <article id="authYearlyPaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 100 pounds with Revolut">
+            <h3>Yearly</h3>
+            <p class="price-tag">£100<span> yearly</span></p>
+          </article>
+          <article id="authLifetimePaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 200 pounds with Revolut">
+            <h3>Premium Access (Lifetime)</h3>
+            <p class="price-tag">£200<span> one-off</span></p>
+          </article>
+        </div>
+        <p class="helper-text">After payment, please allow a few minutes to update plan.</p>
+      </article>
+    </section>
+  </div>
+  <button id="authContactUsFab" class="contact-us-fab" type="button">Contact Us</button>
+  <div id="authContactAdminModal" class="limit-modal" hidden>
+    <div class="limit-modal-card contact-us-card">
+      <p class="card-label">Contact Us</p>
+      <h3>Send a Message</h3>
+      <div class="manual-grid contact-us-grid">
+        <label>
+          User name
+          <input id="authContactUserName" type="text" placeholder="Your name">
+        </label>
+        <label>
+          Email
+          <input id="authContactUserEmail" type="email" placeholder="name@example.com">
+        </label>
+        <label class="full-span">
+          Subject
+          <input id="authContactSubject" type="text" placeholder="How can we help?">
+        </label>
+        <label class="full-span">
+          Message
+          <textarea id="authContactMessage" rows="7" placeholder="Type your message here."></textarea>
+        </label>
+      </div>
+      <div class="letter-controls">
+        <button id="sendAuthContactMessageBtn" class="primary-button" type="button">Send Message</button>
+        <button id="closeAuthContactAdminBtn" class="ghost-button" type="button">Close</button>
+      </div>
+      <div id="authContactStatus" class="auth-status neutral">We will prefill your details where available before sending your message.</div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./auth.js?v=20260417authsync07"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
