@@ -314,9 +314,21 @@ body::after {
 .hero-topline {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 18px;
+}
+
+.hero-topline .small-button,
+.hero-topline .theme-toggle-button {
+  flex: 0 0 auto;
+}
+
+#claimWeeklyDayBtn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
 }
 
 .hero-chip {
