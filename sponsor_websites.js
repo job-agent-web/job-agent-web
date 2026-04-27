@@ -1,0 +1,313 @@
+﻿window.SPONSOR_WEBSITE_CACHE = {
+    "_meta":  {
+                  "generated_at":  "2026-04-18",
+                  "description":  "Official website and careers-page cache for UK Skilled Worker sponsor employers. The platform checks this cache before live lookup so Apply Now can open a company-owned page instead of a search engine.",
+                  "preferred_url_order":  [
+                                              "careersUrl",
+                                              "website"
+                                          ],
+                  "count":  50
+              },
+    "websites":  {
+                     "bupa":  {
+                                  "company":  "Bupa",
+                                  "website":  "https://www.bupa.co.uk/",
+                                  "careersUrl":  "https://careers.bupa.co.uk/",
+                                  "verified":  true
+                              },
+                     "tesco stores":  {
+                                          "company":  "Tesco Stores",
+                                          "website":  "https://www.tesco.com/",
+                                          "careersUrl":  "https://www.tesco-careers.com/",
+                                          "verified":  true
+                                      },
+                     "sainsburys supermarkets":  {
+                                                     "company":  "Sainsbury\u0027s Supermarkets",
+                                                     "website":  "https://www.sainsburys.co.uk/",
+                                                     "careersUrl":  "https://sainsburys.jobs/",
+                                                     "verified":  true
+                                                 },
+                     "asda stores":  {
+                                         "company":  "Asda Stores",
+                                         "website":  "https://www.asda.com/",
+                                         "careersUrl":  "https://www.asda.jobs/",
+                                         "verified":  true
+                                     },
+                     "boots uk":  {
+                                      "company":  "Boots UK",
+                                      "website":  "https://www.boots.com/",
+                                      "careersUrl":  "https://www.boots.jobs/",
+                                      "verified":  true
+                                  },
+                     "morrisons":  {
+                                       "company":  "Morrisons",
+                                       "website":  "https://www.morrisons.com/",
+                                       "careersUrl":  "https://www.morrisons.jobs/",
+                                       "verified":  true
+                                   },
+                     "aldi stores":  {
+                                         "company":  "Aldi Stores",
+                                         "website":  "https://www.aldi.co.uk/",
+                                         "careersUrl":  "https://www.aldirecruitment.co.uk/",
+                                         "verified":  true
+                                     },
+                     "lidl great britain":  {
+                                                "company":  "Lidl Great Britain",
+                                                "website":  "https://www.lidl.co.uk/",
+                                                "careersUrl":  "https://careers.lidl.co.uk/",
+                                                "verified":  true
+                                            },
+                     "amazon uk services":  {
+                                                "company":  "Amazon UK Services",
+                                                "website":  "https://www.amazon.co.uk/",
+                                                "careersUrl":  "https://www.amazon.jobs/en/locations/united-kingdom",
+                                                "verified":  true
+                                            },
+                     "google uk":  {
+                                       "company":  "Google UK",
+                                       "website":  "https://www.google.co.uk/",
+                                       "careersUrl":  "https://www.google.com/about/careers/applications/locations/london/",
+                                       "verified":  true
+                                   },
+                     "microsoft":  {
+                                       "company":  "Microsoft",
+                                       "website":  "https://www.microsoft.com/en-gb/",
+                                       "careersUrl":  "https://careers.microsoft.com/",
+                                       "verified":  true
+                                   },
+                     "meta platforms":  {
+                                            "company":  "Meta Platforms",
+                                            "website":  "https://www.meta.com/",
+                                            "careersUrl":  "https://www.metacareers.com/",
+                                            "verified":  true
+                                        },
+                     "apple retail uk":  {
+                                             "company":  "Apple Retail UK",
+                                             "website":  "https://www.apple.com/uk/",
+                                             "careersUrl":  "https://jobs.apple.com/en-gb/search",
+                                             "verified":  true
+                                         },
+                     "ibm united kingdom":  {
+                                                "company":  "IBM United Kingdom",
+                                                "website":  "https://www.ibm.com/uk-en",
+                                                "careersUrl":  "https://www.ibm.com/careers/uk-en/",
+                                                "verified":  true
+                                            },
+                     "accenture uk":  {
+                                          "company":  "Accenture UK",
+                                          "website":  "https://www.accenture.com/gb-en",
+                                          "careersUrl":  "https://www.accenture.com/gb-en/careers",
+                                          "verified":  true
+                                      },
+                     "deloitte":  {
+                                      "company":  "Deloitte",
+                                      "website":  "https://www.deloitte.com/uk/en.html",
+                                      "careersUrl":  "https://www.deloitte.com/uk/en/careers.html",
+                                      "verified":  true
+                                  },
+                     "pwc":  {
+                                 "company":  "PwC",
+                                 "website":  "https://www.pwc.co.uk/",
+                                 "careersUrl":  "https://www.pwc.co.uk/careers.html",
+                                 "verified":  true
+                             },
+                     "kpmg":  {
+                                  "company":  "KPMG",
+                                  "website":  "https://kpmg.com/uk/en/home.html",
+                                  "careersUrl":  "https://kpmg.com/uk/en/careers.html",
+                                  "verified":  true
+                              },
+                     "ey":  {
+                                "company":  "EY",
+                                "website":  "https://www.ey.com/en_uk",
+                                "careersUrl":  "https://www.ey.com/en_uk/careers",
+                                "verified":  true
+                            },
+                     "capgemini uk":  {
+                                          "company":  "Capgemini UK",
+                                          "website":  "https://www.capgemini.com/gb-en/",
+                                          "careersUrl":  "https://www.capgemini.com/gb-en/careers/",
+                                          "verified":  true
+                                      },
+                     "infosys":  {
+                                     "company":  "Infosys",
+                                     "website":  "https://www.infosys.com/",
+                                     "careersUrl":  "https://www.infosys.com/careers/",
+                                     "verified":  true
+                                 },
+                     "tata consultancy services":  {
+                                                       "company":  "Tata Consultancy Services",
+                                                       "website":  "https://www.tcs.com/",
+                                                       "careersUrl":  "https://www.tcs.com/careers",
+                                                       "verified":  true
+                                                   },
+                     "wipro":  {
+                                   "company":  "Wipro",
+                                   "website":  "https://www.wipro.com/",
+                                   "careersUrl":  "https://careers.wipro.com/",
+                                   "verified":  true
+                               },
+                     "cognizant worldwide":  {
+                                                 "company":  "Cognizant Worldwide",
+                                                 "website":  "https://www.cognizant.com/uk/en",
+                                                 "careersUrl":  "https://careers.cognizant.com/",
+                                                 "verified":  true
+                                             },
+                     "hsbc bank":  {
+                                       "company":  "HSBC Bank",
+                                       "website":  "https://www.hsbc.co.uk/",
+                                       "careersUrl":  "https://www.hsbc.com/careers",
+                                       "verified":  true
+                                   },
+                     "barclays bank":  {
+                                           "company":  "Barclays Bank",
+                                           "website":  "https://www.barclays.co.uk/",
+                                           "careersUrl":  "https://search.jobs.barclays/",
+                                           "verified":  true
+                                       },
+                     "lloyds bank":  {
+                                         "company":  "Lloyds Bank",
+                                         "website":  "https://www.lloydsbank.com/",
+                                         "careersUrl":  "https://www.lloydsbankinggroup.com/careers.html",
+                                         "verified":  true
+                                     },
+                     "natwest":  {
+                                     "company":  "NatWest",
+                                     "website":  "https://www.natwest.com/",
+                                     "careersUrl":  "https://jobs.natwestgroup.com/",
+                                     "verified":  true
+                                 },
+                     "standard chartered bank":  {
+                                                     "company":  "Standard Chartered Bank",
+                                                     "website":  "https://www.sc.com/uk/",
+                                                     "careersUrl":  "https://www.sc.com/en/global-careers/",
+                                                     "verified":  true
+                                                 },
+                     "jpmorgan chase bank":  {
+                                                 "company":  "JPMorgan Chase Bank",
+                                                 "website":  "https://www.jpmorgan.com/GB/en/about-us",
+                                                 "careersUrl":  "https://careers.jpmorgan.com/global/en/home",
+                                                 "verified":  true
+                                             },
+                     "goldman sachs international":  {
+                                                         "company":  "Goldman Sachs International",
+                                                         "website":  "https://www.goldmansachs.com/",
+                                                         "careersUrl":  "https://www.goldmansachs.com/careers/",
+                                                         "verified":  true
+                                                     },
+                     "morgan stanley":  {
+                                            "company":  "Morgan Stanley",
+                                            "website":  "https://www.morganstanley.com/",
+                                            "careersUrl":  "https://www.morganstanley.com/people-opportunities/students-graduates",
+                                            "verified":  true
+                                        },
+                     "nhs england":  {
+                                         "company":  "NHS England",
+                                         "website":  "https://www.england.nhs.uk/",
+                                         "careersUrl":  "https://www.jobs.nhs.uk/",
+                                         "verified":  true
+                                     },
+                     "hca international":  {
+                                               "company":  "HCA International",
+                                               "website":  "https://www.hcahealthcare.co.uk/",
+                                               "careersUrl":  "https://www.hcahealthcare.co.uk/careers",
+                                               "verified":  true
+                                           },
+                     "spire healthcare":  {
+                                              "company":  "Spire Healthcare",
+                                              "website":  "https://www.spirehealthcare.com/",
+                                              "careersUrl":  "https://www.spirehealthcare.com/careers/",
+                                              "verified":  true
+                                          },
+                     "nuffield health":  {
+                                             "company":  "Nuffield Health",
+                                             "website":  "https://www.nuffieldhealth.com/",
+                                             "careersUrl":  "https://www.nuffieldhealthcareers.com/",
+                                             "verified":  true
+                                         },
+                     "care uk":  {
+                                     "company":  "Care UK",
+                                     "website":  "https://www.careuk.com/",
+                                     "careersUrl":  "https://www.careuk.com/careers",
+                                     "verified":  true
+                                 },
+                     "four seasons health care":  {
+                                                      "company":  "Four Seasons Health Care",
+                                                      "website":  "https://www.fshc.co.uk/",
+                                                      "careersUrl":  "https://www.fshc.co.uk/careers/",
+                                                      "verified":  true
+                                                  },
+                     "hc one":  {
+                                    "company":  "HC-One",
+                                    "website":  "https://www.hc-one.co.uk/",
+                                    "careersUrl":  "https://www.hc-one.co.uk/careers",
+                                    "verified":  true
+                                },
+                     "mears group":  {
+                                         "company":  "Mears Group",
+                                         "website":  "https://www.mearsgroup.co.uk/",
+                                         "careersUrl":  "https://www.mearsgroup.co.uk/careers",
+                                         "verified":  true
+                                     },
+                     "serco":  {
+                                   "company":  "Serco",
+                                   "website":  "https://www.serco.com/uk",
+                                   "careersUrl":  "https://www.serco.com/uk/careers",
+                                   "verified":  true
+                               },
+                     "g4s":  {
+                                 "company":  "G4S",
+                                 "website":  "https://www.g4s.com/en-gb",
+                                 "careersUrl":  "https://careers.g4s.com/en",
+                                 "verified":  true
+                             },
+                     "sodexo":  {
+                                    "company":  "Sodexo",
+                                    "website":  "https://uk.sodexo.com/",
+                                    "careersUrl":  "https://uk.sodexo.com/careers.html",
+                                    "verified":  true
+                                },
+                     "compass group uk":  {
+                                              "company":  "Compass Group UK",
+                                              "website":  "https://www.compass-group.co.uk/",
+                                              "careersUrl":  "https://www.compass-careers.co.uk/",
+                                              "verified":  true
+                                          },
+                     "mitie":  {
+                                   "company":  "Mitie",
+                                   "website":  "https://www.mitie.com/",
+                                   "careersUrl":  "https://www.mitie.com/careers/",
+                                   "verified":  true
+                               },
+                     "rolls royce":  {
+                                         "company":  "Rolls-Royce",
+                                         "website":  "https://www.rolls-royce.com/",
+                                         "careersUrl":  "https://careers.rolls-royce.com/",
+                                         "verified":  true
+                                     },
+                     "bae systems":  {
+                                         "company":  "BAE Systems",
+                                         "website":  "https://www.baesystems.com/en-uk/home",
+                                         "careersUrl":  "https://www.baesystems.com/en/careers/careers-in-the-uk",
+                                         "verified":  true
+                                     },
+                     "airbus operations":  {
+                                               "company":  "Airbus Operations",
+                                               "website":  "https://www.airbus.com/en",
+                                               "careersUrl":  "https://www.airbus.com/en/careers",
+                                               "verified":  true
+                                           },
+                     "jaguar land rover":  {
+                                               "company":  "Jaguar Land Rover",
+                                               "website":  "https://www.jaguarlandrover.com/",
+                                               "careersUrl":  "https://www.jaguarlandrovercareers.com/",
+                                               "verified":  true
+                                           },
+                     "siemens":  {
+                                     "company":  "Siemens",
+                                     "website":  "https://www.siemens.com/uk/en.html",
+                                     "careersUrl":  "https://www.siemens.com/global/en/company/jobs.html",
+                                     "verified":  true
+                                 }
+                 }
+};

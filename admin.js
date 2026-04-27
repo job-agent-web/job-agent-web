@@ -1,4 +1,5 @@
 var adminSecretKey = "jobMatchAgentAdminSecret";
+var adminFixedPasskey = "job-agent";
 var generatorConfigKey = "jobMatchAgentGeneratorConfig";
 var generatorConfigHistoryKey = "jobMatchAgentGeneratorConfigPrevious";
 var openAiKeyStorageKey = "jobMatchAgentOpenAiKey";
@@ -192,6 +193,13 @@ function setStatus(tone, text) {
   }
   adminStatus.className = "auth-status " + tone;
   adminStatus.innerHTML = esc(text);
+}
+function serviceErrorMessage(text, fallback) {
+  var clean = trim(text);
+  if (/<!doctype html/i.test(clean) || /<html[\s>]/i.test(clean) || /page not found/i.test(clean)) {
+    return "Netlify Functions are not deployed on this site yet. Upload the netlify/functions folder to GitHub and redeploy.";
+  }
+  return clean || fallback;
 }
 function setAdminAccessVisible(show) {
   if (adminAccessCard) {
@@ -625,6 +633,16 @@ function getSecret() {
     return "";
   }
 }
+function isValidAdminPasskey(value) {
+  return trim(value) === adminFixedPasskey;
+}
+function getValidatedAdminSecret() {
+  var secret = trim(adminSecretInput && adminSecretInput.value) || getSecret();
+  if (isValidAdminPasskey(secret)) {
+    return adminFixedPasskey;
+  }
+  return "";
+}
 function clearSecret() {
   try {
     if (window.localStorage) {
@@ -650,10 +668,15 @@ function clearSecret() {
   if (adminGeneratorPanel) {
     adminGeneratorPanel.hidden = true;
   }
-  setStatus("neutral", "Enter your passkey to continue.");
+  setStatus("neutral", "Enter passkey: job-agent");
 }
 function restoreSecretAndMaybeLoad() {
   var secret = getSecret();
+  if (secret && !isValidAdminPasskey(secret)) {
+    clearSecret();
+    setStatus("neutral", "Enter passkey: job-agent");
+    return;
+  }
   if (adminSecretInput) {
     adminSecretInput.value = secret;
   }
@@ -667,19 +690,19 @@ function restoreSecretAndMaybeLoad() {
 }
 function saveSecretAndLoad() {
   var secret = trim(adminSecretInput && adminSecretInput.value);
-  if (!secret) {
-    setStatus("bad", "Enter your passkey first.");
+  if (!isValidAdminPasskey(secret)) {
+    setStatus("bad", "Use passkey: job-agent");
     return;
   }
-  saveSecret(secret);
+  saveSecret(adminFixedPasskey);
   setAdminAccessVisible(false);
   loadAdminUsers();
 }
 function loadAdminUsers() {
-  var secret = trim(adminSecretInput && adminSecretInput.value) || getSecret();
+  var secret = getValidatedAdminSecret();
   if (!secret) {
     setAdminAccessVisible(true);
-    setStatus("bad", "Enter your passkey first.");
+    setStatus("bad", "Use passkey: job-agent");
     return;
   }
   setStatus("neutral", "Loading user activity now...");
@@ -696,7 +719,7 @@ function loadAdminUsers() {
       try {
         data = text ? JSON.parse(text) : null;
       } catch (parseError) {
-        data = { ok: false, message: trim(text) || ("The monitoring service returned " + response.status + ".") };
+        data = { ok: false, message: serviceErrorMessage(text, "The monitoring service returned " + response.status + ".") };
       }
       return { ok: response.ok, data: data };
     });
@@ -1067,9 +1090,9 @@ function changeHostedUserPassword(email) {
 }
 
 function runAdminAction(action, payload) {
-  var secret = trim(adminSecretInput && adminSecretInput.value) || getSecret();
+  var secret = getValidatedAdminSecret();
   if (!secret) {
-    setStatus("bad", "Enter your passkey first.");
+    setStatus("bad", "Use passkey: job-agent");
     return Promise.resolve(false);
   }
   setStatus("neutral", "Applying admin change now...");
@@ -1089,7 +1112,7 @@ function runAdminAction(action, payload) {
       try {
         data = text ? JSON.parse(text) : null;
       } catch (parseError) {
-        data = { ok: false, message: trim(text) || ("The admin service returned " + response.status + ".") };
+        data = { ok: false, message: serviceErrorMessage(text, "The admin service returned " + response.status + ".") };
       }
       return { ok: response.ok, data: data };
     });

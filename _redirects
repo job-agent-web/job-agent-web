@@ -3,4 +3,6 @@
 /admin.html     /admin/index.html   200
 /app            /app.html           200
 /app/           /app.html           200
+/diagnostics    /diagnostics.html   200
+/diagnostics/   /diagnostics.html   200
 /index          /index.html         200

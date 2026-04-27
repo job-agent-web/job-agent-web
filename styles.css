@@ -136,6 +136,51 @@ body::after {
   max-width: 60ch;
 }
 
+.platform-functions-card {
+  background: linear-gradient(135deg, rgba(17, 32, 59, 0.94), rgba(20, 184, 166, 0.78));
+  color: #ffffff;
+}
+
+.platform-functions-card .card-label,
+.platform-functions-card h2,
+.platform-functions-card .helper-text {
+  color: #ffffff;
+}
+
+.platform-functions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.platform-function-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.platform-function-pill span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--ink);
+  font-size: 0.86rem;
+}
+
 .auth-title {
   font-size: clamp(2rem, 4vw, 3rem);
   line-height: 0.95;
@@ -329,6 +374,7 @@ body::after {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
+  color: #ffffff !important;
 }
 
 .hero-chip {
@@ -1806,6 +1852,7 @@ a {
 @media (max-width: 900px) {
   .hero,
   .pricing-grid,
+  .platform-functions-grid,
   .cv-grid,
   .cv-builder-grid,
   .cv-role-grid,

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Match Agent Diagnostics</title>
+  <link rel="stylesheet" href="./styles.css?v=20260427fourfix01">
+  <style>
+    body {
+      min-height: 100vh;
+      padding: 28px;
+      background:
+        radial-gradient(circle at top left, rgba(255, 214, 102, 0.45), transparent 32%),
+        radial-gradient(circle at top right, rgba(58, 134, 255, 0.28), transparent 35%),
+        linear-gradient(135deg, #f8fbff, #e7f7f1 55%, #fff6de);
+    }
+
+    .diagnostics-shell {
+      width: min(1040px, 100%);
+      margin: 0 auto;
+    }
+
+    .diagnostics-card {
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      backdrop-filter: blur(16px);
+    }
+
+    .diagnostics-grid {
+      display: grid;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .diagnostic-row {
+      display: grid;
+      grid-template-columns: 180px 120px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(17, 32, 59, 0.05);
+      border: 1px solid rgba(17, 32, 59, 0.08);
+    }
+
+    .diagnostic-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-weight: 900;
+      font-size: 0.82rem;
+    }
+
+    .diagnostic-pill.good {
+      color: #067647;
+      background: rgba(6, 118, 71, 0.12);
+    }
+
+    .diagnostic-pill.warn {
+      color: #925400;
+      background: rgba(255, 183, 3, 0.18);
+    }
+
+    .diagnostic-pill.bad {
+      color: #991b1b;
+      background: rgba(153, 27, 27, 0.12);
+    }
+
+    .diagnostic-output {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "Courier New", monospace;
+      font-size: 0.86rem;
+      color: var(--ink);
+    }
+
+    .diagnostic-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .diagnostic-note {
+      margin-top: 20px;
+      border-radius: 22px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(17, 32, 59, 0.94), rgba(20, 184, 166, 0.78));
+      color: #ffffff;
+      font-weight: 800;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 16px;
+      }
+
+      .diagnostic-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="diagnostics-shell">
+    <section class="diagnostics-card">
+      <p class="card-label">Netlify Diagnostics</p>
+      <h1 class="auth-title">Job Match Agent health check</h1>
+      <p class="helper-text auth-copy">
+        This page checks whether Netlify is serving the site files and whether the AI functions are reachable.
+      </p>
+      <div class="diagnostic-actions">
+        <button id="runDiagnosticsBtn" class="primary-button small-button" type="button">Run Checks</button>
+        <a class="ghost-button small-button" href="./app.html">Open App</a>
+        <a class="ghost-button small-button" href="./admin.html">Open Admin</a>
+      </div>
+      <div id="diagnosticsGrid" class="diagnostics-grid" aria-live="polite"></div>
+      <div id="diagnosticNote" class="diagnostic-note" hidden></div>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      var checks = [
+        { name: "Home page", url: "./index.html", expect: [200] },
+        { name: "App page", url: "./app.html?v=20260427fourfix01", expect: [200] },
+        { name: "App script", url: "./app.js?v=20260427fourfix01", expect: [200] },
+        { name: "Styles", url: "./styles.css?v=20260427fourfix01", expect: [200] },
+        { name: "AI health", url: "/.netlify/functions/ai-health", expect: [200] },
+        { name: "AI smoke test", url: "/.netlify/functions/ai-smoke-test", expect: [200] },
+        { name: "Admin users function", url: "/.netlify/functions/admin-users", expect: [200, 401, 403] }
+      ];
+      var grid = document.getElementById("diagnosticsGrid");
+      var note = document.getElementById("diagnosticNote");
+      var button = document.getElementById("runDiagnosticsBtn");
+
+      function esc(value){
+        return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+
+      function classify(result){
+        if(result.status === 503){
+          return { tone: "bad", label: "503", message: "Netlify is not serving this resource. This is usually a Netlify site/account/deploy availability issue, not a pane JavaScript bug." };
+        }
+        if(result.ok){
+          return { tone: "good", label: "OK", message: result.message };
+        }
+        if(result.status === 401 || result.status === 403){
+          return { tone: "good", label: String(result.status), message: "Protected function is reachable. This status is expected without an admin header." };
+        }
+        return { tone: "warn", label: String(result.status || "ERR"), message: result.message || "The check did not return the expected response." };
+      }
+
+      function render(results){
+        var has503 = results.some(function(item){ return item.status === 503; });
+        grid.innerHTML = results.map(function(result){
+          var state = classify(result);
+          return [
+            '<article class="diagnostic-row">',
+            '<strong>' + esc(result.name) + '</strong>',
+            '<span class="diagnostic-pill ' + state.tone + '">' + esc(state.label) + '</span>',
+            '<pre class="diagnostic-output">' + esc(state.message) + '</pre>',
+            '</article>'
+          ].join("");
+        }).join("");
+        if(has503){
+          note.hidden = false;
+          note.innerHTML = "A 503 on normal files and functions means Netlify is blocking or failing the site before the app code runs. Check Netlify deploy status, usage limits, billing/plan limits, or create a fresh deploy after uploading these files.";
+        } else {
+          note.hidden = false;
+          note.innerHTML = "No global 503 detected. If an AI check still fails, open the AI smoke test result above and check the missing provider key shown there.";
+        }
+      }
+
+      async function runOne(check){
+        var response, text, json, ok, message;
+        try {
+          response = await fetch(check.url, { cache: "no-store" });
+          text = await response.text();
+          try { json = JSON.parse(text); } catch (error) { json = null; }
+          ok = check.expect.indexOf(response.status) !== -1;
+          if(json){
+            message = JSON.stringify(json, null, 2);
+          } else {
+            message = text ? text.slice(0, 700) : response.statusText || "No response body.";
+          }
+          return { name: check.name, url: check.url, status: response.status, ok: ok, message: message };
+        } catch (error) {
+          return { name: check.name, url: check.url, status: 0, ok: false, message: error && error.message ? error.message : "Network request failed." };
+        }
+      }
+
+      async function runChecks(){
+        var results = [];
+        var i;
+        button.disabled = true;
+        button.textContent = "Checking...";
+        grid.innerHTML = '<article class="diagnostic-row"><strong>Running</strong><span class="diagnostic-pill warn">WAIT</span><pre class="diagnostic-output">Checking site and Netlify Functions...</pre></article>';
+        for(i = 0; i < checks.length; i += 1){
+          results.push(await runOne(checks[i]));
+          render(results);
+        }
+        button.disabled = false;
+        button.textContent = "Run Checks Again";
+      }
+
+      button.onclick = runChecks;
+      runChecks();
+    })();
+  </script>
+</body>
+</html>

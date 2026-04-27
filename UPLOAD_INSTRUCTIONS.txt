@@ -1,0 +1,26 @@
+﻿JOB MATCH AGENT UPLOAD PACKAGE
+
+Upload these files/folders to the GitHub repo root:
+- _redirects
+- netlify.toml
+- index.html
+- app.html
+- app.js
+- styles.css
+- diagnostics.html
+- admin.html
+- admin.js
+- ai-session-memory.js
+- career-path-library.js
+- cv-generator.js
+- sponsor_websites.js
+- sponsor_websites.json
+- admin/index.html
+- netlify/functions/*.js
+
+After Netlify deploy finishes, open:
+- https://job-match-agent-web.netlify.app/diagnostics
+- https://job-match-agent-web.netlify.app/.netlify/functions/ai-health
+- https://job-match-agent-web.netlify.app/.netlify/functions/ai-smoke-test
+
+If /diagnostics shows 503 for Home page, App page, App script, and AI health, the problem is Netlify serving/usage/deploy availability, not the pane code.
