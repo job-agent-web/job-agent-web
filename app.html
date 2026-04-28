@@ -366,6 +366,26 @@
   </script>
 
   <script>
+    if(typeof window.parseJson !== "function"){
+      window.parseJson = function(raw, fallback){
+        if(raw == null || raw === ""){
+          return arguments.length > 1 ? fallback : null;
+        }
+        try {
+          return JSON.parse(raw);
+        } catch (error) {
+          return arguments.length > 1 ? fallback : null;
+        }
+      };
+    }
+    if(typeof window.parseJsonSafe !== "function"){
+      window.parseJsonSafe = function(raw){
+        return window.parseJson(raw, null);
+      };
+    }
+  </script>
+
+  <script>
     (function(){
       var sessionKey = "jobMatchAgentHostedSession";
       function parseJson(raw){ try { return raw ? JSON.parse(raw) : null; } catch (error) { return null; } }
@@ -1136,7 +1156,7 @@
         <span id="rexChatLockBadge" hidden aria-hidden="true"></span>
         <div id="rexChatPanelBody" class="collapsed-body" hidden>
           <div class="letter-controls">
-            <button id="sendRexChatBtn" class="primary-button" type="button" onclick="if(window.sendRexChatMessage){window.sendRexChatMessage();}else if(window.rexFallbackSend){window.rexFallbackSend();}return false;">Send</button>
+            <button id="sendRexChatBtn" class="primary-button" type="button" onclick="if(window.jobMatchDispatchRexSend){window.jobMatchDispatchRexSend();}else if(window.sendRexChatMessage){window.sendRexChatMessage();}else if(window.rexFallbackSend){window.rexFallbackSend();}return false;">Send</button>
             <button id="clearRexChatBtn" class="ghost-button" type="button">Clear Chat</button>
           </div>
           <div class="draft-panel rex-question-bank-panel">
@@ -1165,7 +1185,7 @@
             </button>
             <input id="rexChatFileInput" class="file-picker-input rex-file-picker-input" type="file" accept=".txt,.doc,.docx,.pdf,.rtf,.png,.jpg,.jpeg,.webp,.gif,.bmp,image/*" onchange="if(window.handleRexChatFileSelection){window.handleRexChatFileSelection(this.files&&this.files[0],this);}else if(window.rexFallbackAttach){window.rexFallbackAttach(this.files&&this.files[0]);}">
             <label class="rex-chat-input-wrap">
-              <textarea id="rexChatInput" rows="2" placeholder="Ask Rex to coach you for interviews, strengthen answers, or practise likely questions." onkeydown="if((event.key==='Enter'||event.keyCode===13)&&!event.shiftKey){event.preventDefault();var b=document.getElementById('sendRexChatBtn');if(b){b.click();}return false;}return true;"></textarea>
+              <textarea id="rexChatInput" rows="2" placeholder="Ask Rex to coach you for interviews, strengthen answers, or practise likely questions." onkeydown="if((event.key==='Enter'||event.keyCode===13)&&!event.shiftKey){event.preventDefault();if(window.jobMatchDispatchRexSend){window.jobMatchDispatchRexSend();}else{var b=document.getElementById('sendRexChatBtn');if(b){b.click();}}return false;}return true;"></textarea>
             </label>
           </div>
           <div id="rexChatFileStatus" class="upload-status">No file attached.</div>
@@ -3799,7 +3819,8 @@
             lines.push("Sample answer:\nI would approach " + focus + " by clarifying the outcome needed, choosing the most relevant example from my experience, and explaining the actions I personally took. I would show how I organised the work, communicated clearly, managed any pressure, and followed through to a useful result. That would help the panel see both my judgement and my delivery standard.");
           }
           return lines.join("\n");
-        }        async function send(){
+        }
+        async function send(){
           var userMessage = input && input.value ? String(input.value).replace(/^\s+|\s+$/g, "") : "";
           var result = null;
           if(sending){ return false; }
@@ -3808,41 +3829,49 @@
             return false;
           }
           sending = true;
-          if(attachedFile && attachedFile.text){
-            messages.push({ role: "user", text: "[Attached file: " + attachedFile.name + "]" });
-          }
-          messages.push({ role: "user", text: userMessage });
-          messages.push({ role: "assistant", text: "", pending: true });
-          render();
-          if(input){
-            input.value = "";
-            input.disabled = true;
-          }
-          if(sendBtn){ sendBtn.disabled = true; }
-          setStatus("Rex is thinking...", "neutral");
-          if(window.top && typeof window.top.callOpenAIResponses === "function"){
-            result = desktopReply(userMessage);
-          } else {
-            result = await hostedReply(userMessage);
-          }
-          if(result && result.ok){
-            replacePending(String(result.text || ""));
-            setStatus("Rex replied.", "good");
-          } else {
+          try {
+            if(attachedFile && attachedFile.text){
+              messages.push({ role: "user", text: "[Attached file: " + attachedFile.name + "]" });
+            }
+            messages.push({ role: "user", text: userMessage });
+            messages.push({ role: "assistant", text: "", pending: true });
+            render();
+            if(input){
+              input.value = "";
+              input.disabled = true;
+            }
+            if(sendBtn){ sendBtn.disabled = true; }
+            setStatus("Rex is thinking...", "neutral");
+            if(window.top && typeof window.top.callOpenAIResponses === "function"){
+              result = desktopReply(userMessage);
+            } else {
+              result = await hostedReply(userMessage);
+            }
+            if(result && result.ok){
+              replacePending(String(result.text || ""));
+              setStatus("Rex replied.", "good");
+            } else {
+              replacePending(localReply(userMessage));
+              setStatus("Rex replied using the built-in interview coach.", "good");
+            }
+            render();
+          } catch (error5) {
             replacePending(localReply(userMessage));
+            render();
             setStatus("Rex replied using the built-in interview coach.", "good");
-          }
-          render();
-          sending = false;
-          if(sendBtn){ sendBtn.disabled = false; }
-          if(input){
-            input.disabled = false;
-            try { input.focus(); } catch (error4) {}
+          } finally {
+            sending = false;
+            if(sendBtn){ sendBtn.disabled = false; }
+            if(input){
+              input.disabled = false;
+              try { input.focus(); } catch (error4) {}
+            }
           }
           return false;
         }
         if(sendBtn){
           sendBtn.onclick = function(){
+            if(window.jobMatchDispatchRexSend){ window.jobMatchDispatchRexSend(); return false; }
             send();
             return false;
           };
@@ -3877,6 +3906,7 @@
           if((event.key === "Enter" || event.keyCode === 13) && !event.shiftKey){
             if(event.preventDefault){ event.preventDefault(); }
             if(event.stopPropagation){ event.stopPropagation(); }
+            if(window.jobMatchDispatchRexSend){ window.jobMatchDispatchRexSend(); return false; }
             send();
             return false;
           }
@@ -4394,7 +4424,7 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="./ai-session-memory.js?v=20260417aiwhole11"></script>
-<script src="./app.js?v=20260428rexchatfix01"></script>
+<script src="./app.js?v=20260428rexsendfix01"></script>
     <script src="./career-path-library.js?v=20260417career50clean01"></script>
     <script src="./cv-generator.js?v=20260427aifix01"></script>
     <script>
