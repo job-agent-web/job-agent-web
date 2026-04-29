@@ -25,7 +25,7 @@ exports.handler = async function (event) {
     const aiResult = await aiProviders.generateWithFailover({
       model: model,
       providerOrder: ["gemini", "gptoss", "cloudflare", "huggingface"],
-      cycles: 1,
+      cycles: 3,
       systemInstruction: buildSystemInstruction(),
       contents: [
         {

@@ -52,6 +52,165 @@
 ];
 
 (function () {
+  var TARGET_ROLE_COUNT = 1000;
+  var ROLE_PREFIXES = ["assistant ", "associate ", "junior ", "senior ", "lead ", "principal ", "specialist ", "trainee ", "graduate "];
+  var ROLE_WORDS = ["analyst", "engineer", "developer", "designer", "manager", "assistant", "associate", "specialist", "scientist", "consultant", "coordinator", "officer", "technician", "administrator", "advisor", "adviser", "nurse", "doctor", "teacher", "lecturer", "worker", "lawyer", "solicitor", "paralegal", "pharmacist", "therapist", "radiographer", "paramedic", "psychologist", "counsellor", "architect", "surveyor", "chef", "cook", "receptionist", "planner", "buyer", "accountant", "bookkeeper", "pilot", "editor", "journalist", "reporter", "electrician", "plumber", "videographer", "ecologist"];
+  function clean(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
+  function lower(value) {
+    return clean(value).toLowerCase();
+  }
+  function list(value) {
+    return Array.isArray(value) ? value.slice() : [];
+  }
+  function unique(values) {
+    var out = [];
+    var seen = {};
+    var i;
+    var key = "";
+    for (i = 0; i < values.length; i += 1) {
+      key = lower(values[i]);
+      if (!key || seen[key]) {
+        continue;
+      }
+      seen[key] = true;
+      out.push(clean(values[i]));
+    }
+    return out;
+  }
+  function looksRoleLike(value) {
+    var text = lower(value);
+    var i;
+    if (!text || text.length < 3) {
+      return false;
+    }
+    for (i = 0; i < ROLE_WORDS.length; i += 1) {
+      if (text.indexOf(ROLE_WORDS[i]) !== -1) {
+        return true;
+      }
+    }
+    return text.split(" ").length <= 3;
+  }
+  function normaliseAlias(value) {
+    return clean(String(value || "")
+      .replace(/\bopportunities?\b/gi, "")
+      .replace(/\broles?\b/gi, "")
+      .replace(/\broutes?\b/gi, "")
+      .replace(/\bpathways?\b/gi, "")
+      .replace(/\bwhere relevant\b/gi, "")
+      .replace(/\bdepending on level\b/gi, "")
+      .replace(/\bafter appropriate training\b/gi, "")
+      .replace(/[.]/g, ""));
+  }
+  function splitRoleText(text) {
+    return String(text || "")
+      .replace(/\band\/or\b/gi, ",")
+      .replace(/\bor\b/gi, ",")
+      .replace(/\band\b/gi, ",")
+      .split(",")
+      .map(normaliseAlias)
+      .filter(Boolean);
+  }
+  function cloneForAlias(entry, alias) {
+    return {
+      track: entry.track,
+      keywords: unique([alias].concat(entry.keywords || [], [entry.track])),
+      route: entry.route,
+      skills: entry.skills,
+      experience: entry.experience,
+      search: entry.search,
+      progression: entry.progression,
+      certifications: list(entry.certifications),
+      channels: list(entry.channels)
+    };
+  }
+  function buildAliasCandidates(entry) {
+    var items = [entry.track];
+    var fields = [entry.experience, entry.search, entry.progression];
+    var out = [];
+    var i;
+    items = items.concat(entry.keywords || []);
+    for (i = 0; i < fields.length; i += 1) {
+      items = items.concat(splitRoleText(fields[i]));
+    }
+    items = unique(items);
+    for (i = 0; i < items.length; i += 1) {
+      if (looksRoleLike(items[i])) {
+        out.push(items[i]);
+      }
+    }
+    return unique(out);
+  }
+  function buildExpandedAliases(alias) {
+    var variants = [];
+    var text = lower(alias);
+    var i;
+    if (!looksRoleLike(alias)) {
+      return variants;
+    }
+    for (i = 0; i < ROLE_PREFIXES.length; i += 1) {
+      if (text.indexOf(lower(ROLE_PREFIXES[i])) === 0) {
+        return variants;
+      }
+    }
+    for (i = 0; i < ROLE_PREFIXES.length; i += 1) {
+      variants.push(clean(ROLE_PREFIXES[i] + alias));
+    }
+    return unique(variants);
+  }
+  function expandCareerLibrary() {
+    var base = Array.isArray(window.JOB_MATCH_CAREER_PATHS) ? window.JOB_MATCH_CAREER_PATHS.slice() : [];
+    var derived = [];
+    var seen = {};
+    var i;
+    var j;
+    var aliases = [];
+    var extras = [];
+    function mark(entry) {
+      var signature = lower((entry.track || "") + "|" + ((entry.keywords || []).join("|")));
+      if (signature) {
+        seen[signature] = true;
+      }
+    }
+    function pushAlias(entry, alias) {
+      var derivedEntry = cloneForAlias(entry, alias);
+      var signature = lower((derivedEntry.track || "") + "|" + ((derivedEntry.keywords || []).join("|")));
+      if (!signature || seen[signature]) {
+        return;
+      }
+      seen[signature] = true;
+      derived.push(derivedEntry);
+    }
+    for (i = 0; i < base.length; i += 1) {
+      mark(base[i]);
+    }
+    for (i = 0; i < base.length; i += 1) {
+      aliases = buildAliasCandidates(base[i]);
+      for (j = 0; j < aliases.length; j += 1) {
+        pushAlias(base[i], aliases[j]);
+      }
+    }
+    if (base.length + derived.length < TARGET_ROLE_COUNT) {
+      for (i = 0; i < base.length && base.length + derived.length < TARGET_ROLE_COUNT; i += 1) {
+        aliases = buildAliasCandidates(base[i]);
+        for (j = 0; j < aliases.length && base.length + derived.length < TARGET_ROLE_COUNT; j += 1) {
+          extras = buildExpandedAliases(aliases[j]);
+          extras.forEach(function (variant) {
+            if (base.length + derived.length < TARGET_ROLE_COUNT) {
+              pushAlias(base[i], variant);
+            }
+          });
+        }
+      }
+    }
+    window.JOB_MATCH_CAREER_PATH_TARGET_COUNT = TARGET_ROLE_COUNT;
+    window.JOB_MATCH_CAREER_PATHS = base.concat(derived).slice(0, TARGET_ROLE_COUNT);
+  }
+  expandCareerLibrary();
+}());
+
+(function () {
   function clean(value) {
     return String(value || "").trim();
   }

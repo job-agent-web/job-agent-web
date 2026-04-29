@@ -263,13 +263,6 @@ body::after {
   border-color: rgba(180, 35, 24, 0.16);
 }
 
-.claim-weekly-day-status.neutral,
-.claim-weekly-day-status.good,
-.claim-weekly-day-status.warn,
-.claim-weekly-day-status.bad {
-  color: #ffffff !important;
-}
-
 
 .pricing-grid {
   display: grid;
@@ -958,6 +951,66 @@ body[data-theme="dark"] .rex-message.assistant .rex-message-role {
   border-radius: 14px;
 }
 
+.generated-option-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 12px 0 16px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(24, 68, 112, 0.08), rgba(24, 173, 160, 0.1));
+  border: 1px solid rgba(24, 68, 112, 0.12);
+}
+
+.generated-option-copy {
+  flex: 1 1 280px;
+}
+
+.generated-option-copy strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #16324f;
+}
+
+.generated-option-copy .job-meta,
+.option-helper-note {
+  margin: 0;
+}
+
+.generated-option-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.option-choice-button {
+  border: 1px solid rgba(17, 32, 59, 0.14);
+  background: rgba(255, 255, 255, 0.92);
+  color: #16324f;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.option-choice-button:hover,
+.option-choice-button:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(20, 89, 145, 0.26);
+  box-shadow: 0 10px 24px rgba(17, 32, 59, 0.08);
+}
+
+.option-choice-button.active {
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.95), rgba(0, 184, 148, 0.92));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 12px 30px rgba(22, 50, 79, 0.16);
+}
+
 .file-picker-input {
   position: absolute;
   left: -9999px;
@@ -1280,38 +1333,58 @@ textarea {
 
 .generated-cv-preview {
   margin-top: 20px;
-  border-radius: 24px;
-  border: 1px solid rgba(17, 32, 59, 0.1);
-  background: var(--panel-strong);
-  padding: 24px;
-  box-shadow: var(--shadow-soft);
+  border-radius: 28px;
+  border: 1px solid rgba(22, 58, 91, 0.12);
+  background: #ffffff;
+  padding: 28px;
+  box-shadow: 0 20px 44px rgba(19, 44, 73, 0.12);
 }
 
 .generated-cv-document {
-  max-width: 780px;
+  max-width: 940px;
   margin: 0 auto;
-  color: var(--ink);
+  color: #1e2f4d;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 18px 34px 22px;
+  font-family: Georgia, "Times New Roman", serif;
 }
 
 .generated-cv-header {
   text-align: center;
-  padding-bottom: 16px;
-  border-bottom: 2px solid rgba(17, 32, 59, 0.12);
+  padding: 10px 0 8px;
+  background: transparent;
+  color: #1a2748;
+}
+
+.generated-cv-kicker {
+  display: none;
 }
 
 .generated-cv-header h2 {
   margin: 0;
-  font-size: 2rem;
-  letter-spacing: 0.02em;
+  font-size: 2.9rem;
+  line-height: 1.15;
+  font-weight: 700;
+  color: #17274a;
 }
 
-.generated-cv-contact {
-  margin-top: 10px;
-  color: var(--muted);
+.generated-cv-contact-line {
+  margin: 18px 0 0;
+  font-size: 0.95rem;
+  color: #60708e;
+  line-height: 1.6;
 }
 
-.generated-cv-address {
-  margin-top: 4px;
+.generated-cv-address-line {
+  margin-top: 8px;
+}
+
+.generated-cv-divider {
+  height: 1px;
+  margin: 26px auto 28px;
+  width: 82%;
+  background: #d7dde5;
 }
 
 .generated-cv-section {
@@ -1319,69 +1392,113 @@ textarea {
 }
 
 .generated-cv-section h3 {
-  margin: 0 0 10px;
-  font-size: 0.92rem;
-  letter-spacing: 0.16em;
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--accent-4);
+  color: #3f82ff;
+  padding-left: 0;
 }
 
-.generated-cv-profile {
+.generated-cv-section h3::before {
+  display: none;
+}
+
+.generated-cv-section-copy,
+.generated-cv-role {
+  font-size: 0;
+}
+
+.generated-cv-profile,
+.generated-cv-skills-line,
+.generated-cv-role-heading-line,
+.generated-cv-role-date,
+.generated-cv-list,
+.generated-cv-detail-list {
+  font-size: 1rem;
+}
+
+.generated-cv-profile,
+.generated-cv-skills-line {
   margin: 0;
-  line-height: 1.7;
+  line-height: 1.85;
+  color: #1e2f4d;
 }
 
-.generated-cv-skills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.generated-cv-skills span {
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: rgba(58, 134, 255, 0.1);
-  color: var(--ink);
-  font-size: 0.88rem;
+.generated-cv-role-stack {
+  display: grid;
+  gap: 22px;
 }
 
 .generated-cv-role {
-  padding: 14px 0;
-  border-top: 1px solid rgba(17, 32, 59, 0.08);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.generated-cv-role:first-of-type {
-  border-top: 0;
-  padding-top: 0;
-}
-
-.generated-cv-role-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: baseline;
-}
-
-.generated-cv-role-top h4,
-.generated-cv-role-top p {
+.generated-cv-role-heading-line {
   margin: 0;
-}
-
-.generated-cv-role-company {
-  color: var(--muted);
-  margin-top: 3px;
+  color: #1e2f4d;
+  font-weight: 700;
+  line-height: 1.5;
 }
 
 .generated-cv-role-date {
-  color: var(--muted);
-  white-space: nowrap;
+  margin: 12px 0 0;
+  padding: 0;
+  color: #667896;
+  background: transparent;
+  border-radius: 0;
+  display: block;
+  font-size: 0.94rem;
+  font-weight: 500;
 }
 
-.generated-cv-role ul,
 .generated-cv-list {
-  margin: 10px 0 0;
-  padding-left: 18px;
-  line-height: 1.7;
+  margin: 16px 0 0;
+  padding-left: 26px;
+  line-height: 1.9;
+  color: #1e2f4d;
+}
+
+.generated-cv-detail-list {
+  margin-top: 0;
+}
+
+.generated-cv-list li + li {
+  margin-top: 6px;
+}
+
+.generated-cv-list li::marker {
+  color: #17274a;
+}
+
+@media (max-width: 680px) {
+  .generated-cv-preview {
+    padding: 18px;
+  }
+
+  .generated-cv-document {
+    padding: 10px 12px 18px;
+  }
+
+  .generated-cv-header h2 {
+    font-size: 2.2rem;
+  }
+
+  .generated-cv-divider {
+    width: 100%;
+  }
+
+  .generated-cv-contact-line,
+  .generated-cv-profile,
+  .generated-cv-skills-line,
+  .generated-cv-role-heading-line,
+  .generated-cv-list {
+    font-size: 0.95rem;
+  }
 }
 
 .scraper-grid {
@@ -2316,6 +2433,14 @@ a {
 }
 
 @media (max-width: 900px) {
+  .generated-option-bar {
+    align-items: stretch;
+  }
+
+  .generated-option-buttons {
+    width: 100%;
+  }
+
   .cover-letter-job-description-top {
     align-items: stretch;
   }

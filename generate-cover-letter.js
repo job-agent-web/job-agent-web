@@ -55,7 +55,7 @@ exports.handler = async function (event) {
       temperature: 0.7,
       topP: 0.95,
       maxOutputTokens: wordRange.max > 1000 ? 1800 : 1600,
-      cycles: 1
+      cycles: 3
     });
 
     if (!result.ok) {
@@ -95,7 +95,7 @@ exports.handler = async function (event) {
         temperature: 0.55,
         topP: 0.9,
         maxOutputTokens: wordRange.max > 1000 ? 1800 : 1600,
-        cycles: 1
+        cycles: 3
       });
       if (rewrite.ok && rewrite.text) {
         finalText = cleanCoverLetterText(rewrite.text, coverLetterName);
