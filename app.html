@@ -793,11 +793,11 @@
       </section>
 
       <section class="panel priority-panel collapsed-panel" id="coverLetterPanel">
-        <button id="coverLetterToggleBtn" class="section-toggle" type="button" aria-expanded="true" aria-controls="coverLetterPanelBody">
+        <button id="coverLetterToggleBtn" class="section-toggle" type="button" aria-expanded="false" aria-controls="coverLetterPanelBody">
           <span class="pane-title-with-lock"><span>2. Generate Cover Letter</span><span id="coverLetterLockBadge" class="pane-lock-badge" hidden title="Renew your plan to unlock this pane">&#128274;</span></span>
-          <span id="coverLetterToggleIcon" class="toggle-icon">-</span>
+          <span id="coverLetterToggleIcon" class="toggle-icon">+</span>
         </button>
-        <div id="coverLetterPanelBody" class="collapsed-body">
+        <div id="coverLetterPanelBody" class="collapsed-body" hidden>
         <div class="letter-controls">
           <button id="jumpGeneratorConfigBtn" class="ghost-button" type="button" hidden>Admin Cover Letter Logic</button>
         </div>
@@ -2515,7 +2515,7 @@
                 certifications: aiPlan.certifications || [],
                 channels: aiPlan.channels || []
               });
-              setStatus("Built an AI-guided step-by-step route into " + escapeHtml(goal) + ".", "good");
+              setStatus("Your career path plan is ready below.", "good");
               return false;
             }
             renderPlan(plan);
@@ -3452,14 +3452,11 @@
           var data;
           var result;
           var performMatchExists = typeof window.performMatch === "function";
+          var isHostedMode = String(window.location && window.location.protocol || "").indexOf("http") === 0;
           if(event){
             if(event.preventDefault){ event.preventDefault(); }
             if(event.stopImmediatePropagation){ event.stopImmediatePropagation(); }
             if(event.stopPropagation){ event.stopPropagation(); }
-          }
-          data = buildData();
-          if(!data){
-            return false;
           }
           if(performMatchExists){
             try {
@@ -3467,11 +3464,22 @@
               if(result && typeof result.then === "function"){
                 result = await result;
               }
-              if(result){
+              if(result || (resultsNode && resultsNode.querySelector && resultsNode.querySelector(".cover-letter-result-card"))){
                 return false;
               }
-            } catch (error) {}
-            setStatus("The cover-letter generator did not complete. Please try again in a moment.", "warn");
+              if(isHostedMode){
+                setStatus("The cover-letter generator did not complete. Please try again in a moment.", "warn");
+                return false;
+              }
+            } catch (error) {
+              if(isHostedMode){
+                setStatus("The cover-letter generator did not complete. Please try again in a moment.", "warn");
+                return false;
+              }
+            }
+          }
+          data = buildData();
+          if(!data){
             return false;
           }
           try {
@@ -4430,7 +4438,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   
     <script src="./ai-session-memory.js?v=20260417aiwhole11"></script>
-<script src="./app.js?v=20260429removepdf01"></script>
+<script src="./app.js?v=20260429coveremergency01"></script>
     <script src="./career-path-library.js?v=20260429career1000b01"></script>
     <script src="./cv-generator.js?v=20260429removepdf01"></script>
     <script>

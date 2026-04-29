@@ -31,7 +31,7 @@ exports.handler = async function (event) {
 
     const result = await aiProviders.generateWithFailover({
       model: model,
-      providerOrder: ["gemini", "gptoss", "cloudflare", "huggingface"],
+      providerOrder: ["gptoss", "gemini", "cloudflare", "huggingface"],
       systemInstruction: buildSystemInstruction(),
       contents: [
         {
@@ -70,7 +70,7 @@ exports.handler = async function (event) {
     if (needsRewrite(finalText, wordRange)) {
       const rewrite = await aiProviders.generateWithFailover({
         model: model,
-        providerOrder: ["gemini", "gptoss", "cloudflare", "huggingface"],
+        providerOrder: ["gptoss", "gemini", "cloudflare", "huggingface"],
         systemInstruction: buildRewriteSystemInstruction(),
         contents: [
           {
@@ -173,6 +173,8 @@ function buildUserPrompt(input) {
     "Do not include empty enthusiasm or placeholder claims.",
     "Use persuasive concrete sentences that sound ready to submit.",
     "Do not collapse multiple roles into one vague paragraph when the CV provides distinct roles.",
+    "Never mention employment dates, months, years, or date ranges anywhere in the final cover letter.",
+    "Refer to previous experience by role title only, not by employer timeline strings.",
     "Finish with this sign-off exactly:",
     signoff,
     "",
@@ -182,7 +184,7 @@ function buildUserPrompt(input) {
     "Company: " + input.company,
     "",
     "Candidate CV role evidence only:",
-    input.cvText,
+    stripCoverLetterDateText(input.cvText),
     "",
     "Job description:",
     input.jobDescription,
@@ -216,6 +218,8 @@ function buildRewritePrompt(input) {
     "Critically discuss each relevant role in relation to the job requirements.",
     "Make the role-by-role evidence sharper and more analytical.",
     "Remove repetition and any meta commentary about the CV or advert.",
+    "Never mention employment dates, months, years, or date ranges anywhere in the final cover letter.",
+    "Refer to previous experience by role title only, not by employer timeline strings.",
     "End with this sign-off exactly:",
     signoff,
     "",
@@ -223,7 +227,7 @@ function buildRewritePrompt(input) {
     "Company: " + input.company,
     "",
     "CV role evidence only:",
-    input.cvText,
+    stripCoverLetterDateText(input.cvText),
     "",
     "Job description:",
     input.jobDescription,
@@ -285,11 +289,11 @@ function extractRoleEvidenceSections(cvText) {
       if (current && current.length > 1) {
         sections.push(current.join("\n"));
       }
-      current = [line];
+      current = [simplifyRoleLabel(line)];
       continue;
     }
     if (current && looksLikeRoleDetail(line)) {
-      current.push(line);
+      current.push(stripCoverLetterDateText(line));
     }
   }
   if (current && current.length > 1) {
@@ -329,8 +333,10 @@ function extractResponsibilityLines(cvText, limit) {
   const out = [];
   let i;
   for (i = 0; i < lines.length && out.length < (limit || 24); i += 1) {
-    if (looksLikeRoleHeading(lines[i]) || looksLikeRoleDetail(lines[i])) {
-      out.push(lines[i]);
+    if (looksLikeRoleHeading(lines[i])) {
+      out.push(simplifyRoleLabel(lines[i]));
+    } else if (looksLikeRoleDetail(lines[i])) {
+      out.push(stripCoverLetterDateText(lines[i]));
     }
   }
   return out;
@@ -366,7 +372,7 @@ function cleanCoverLetterText(text, coverLetterName) {
     seen.add(key);
     cleaned.push(part);
   });
-  out = cleaned.join("\n\n").trim();
+  out = stripCoverLetterDateText(cleaned.join("\n\n").trim());
   out = out.replace(/\n\s*(Yours faithfully|Yours sincerely)\s*,?\s*\n[\s\S]*$/i, "").trim();
   return out ? out + "\n\n" + signoff : signoff;
 }
@@ -396,10 +402,38 @@ function extractDetectedRoles(cvText) {
   for (i = 0; i < lines.length; i += 1) {
     match = String(lines[i] || "").match(/^Role\s+\d+\s*:\s*(.+)$/i);
     if (match && match[1]) {
-      roles.push(match[1].trim());
+      roles.push(simplifyRoleLabel(match[1]));
     }
   }
   return roles.slice(0, 6);
+}
+
+function simplifyRoleLabel(text) {
+  let value = String(text || "").replace(/\s+/g, " ").trim();
+  if (!value) {
+    return "";
+  }
+  if (value.indexOf("|") !== -1) {
+    value = value.split("|")[0].trim();
+  }
+  value = value
+    .replace(/\b(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\s+\d{4}\s*-\s*(?:present|current|(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\s+\d{4})\b/ig, "")
+    .replace(/\b\d{4}\s*-\s*(?:present|current|\d{4})\b/ig, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/[|,;-]+\s*$/g, "")
+    .trim();
+  return value || "my previous role";
+}
+
+function stripCoverLetterDateText(text) {
+  return String(text || "")
+    .replace(/\(\s*(?:(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\s+\d{4}|\d{4})\s*-\s*(?:present|current|(?:(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\s+\d{4}|\d{4}))\s*\)/ig, "")
+    .replace(/\b(?:(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\s+\d{4}|\d{4})\s*-\s*(?:present|current|(?:(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\s+\d{4}|\d{4}))\b/ig, "")
+    .replace(/\b(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\s+\d{4}\b/ig, "")
+    .replace(/\b\d{4}\b(?=\s*(?:-|to)\s*(?:present|current|\d{4}))/ig, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;:])/g, "$1")
+    .trim();
 }
 
 function extractUsefulSentences(text, limit) {
