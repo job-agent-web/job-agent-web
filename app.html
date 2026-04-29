@@ -8,6 +8,44 @@
   <link rel="stylesheet" href="./styles.css?v=20260428claimstatus02">
   <script>
     window.JOB_MATCH_LOCAL_UNLOCK_PREMIUM = false;
+    if(typeof window.normalizeAccountPlanType !== "function"){
+      window.normalizeAccountPlanType = function(value){
+        return String(value || "").toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+      };
+    }
+    if(typeof window.isEarlySixMonthPlusPlan !== "function"){
+      window.isEarlySixMonthPlusPlan = function(plan){
+        plan = window.normalizeAccountPlanType(plan);
+        return !!(plan === "6 months" || plan === "six months" || plan === "6 month" || plan === "six month" || plan === "6months" || plan === "6months subscription" || plan === "6 month subscription" || plan === "6 month plan" || plan === "yearly" || plan === "annual" || plan === "annual plan" || plan === "year" || plan === "12 months" || plan === "12 month" || plan === "12months" || plan === "12 month subscription" || plan === "12 months subscription" || plan === "one year" || plan === "one year subscription" || plan === "lifetime" || plan === "life time" || plan === "lifetime access" || plan === "premium" || plan === "premium access");
+      };
+    }
+    if(typeof window.earlyPlanDays !== "function"){
+      window.earlyPlanDays = function(plan){
+        plan = window.normalizeAccountPlanType(plan);
+        if(plan === "monthly" || plan === "month" || plan === "1 month" || plan === "one month" || plan === "one month subscription" || plan === "monthly subscription" || plan === "1 month subscription"){ return 30; }
+        if(plan === "6 months" || plan === "six months" || plan === "6 month" || plan === "six month" || plan === "6months" || plan === "6months subscription" || plan === "6 month subscription" || plan === "6 month plan"){ return 183; }
+        if(plan === "yearly" || plan === "annual" || plan === "annual plan" || plan === "year" || plan === "12 months" || plan === "12 month" || plan === "12months" || plan === "12 month subscription" || plan === "12 months subscription" || plan === "one year" || plan === "one year subscription"){ return 365; }
+        if(plan === "lifetime" || plan === "life time" || plan === "lifetime access" || plan === "premium" || plan === "premium access"){ return Infinity; }
+        return 7;
+      };
+    }
+    if(typeof window.earlyDaysRemaining !== "function"){
+      window.earlyDaysRemaining = function(session){
+        var days = window.earlyPlanDays(session && (session.planType || session.plan_type || session.plan || session.subscriptionPlan || session.subscription_plan));
+        var startValue = (session && (session.subscriptionStartedAt || session.subscription_started_at || session.planStartedAt || session.plan_started_at || session.createdAt || session.created_at)) || "";
+        var start, elapsed;
+        if(days === Infinity){ return Infinity; }
+        start = new Date(startValue || "");
+        if(!isFinite(start.getTime())){ return days; }
+        elapsed = Math.floor(((new Date()).getTime() - start.getTime()) / 86400000);
+        return Math.max(0, days - elapsed);
+      };
+    }
+    if(typeof window.escapeHtml !== "function"){
+      window.escapeHtml = function(value){
+        return String(value || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;");
+      };
+    }
   </script>
   <script>
     (function(){
@@ -1479,7 +1517,7 @@
           return;
         }
         if(usage.paid){
-          balances.innerHTML = '<span class="account-balance-pill premium">Premium account</span>';
+          balances.innerHTML = '';
           return;
         }
         if(daysLeft > 0){
@@ -3525,6 +3563,31 @@
         }
         if(!runBtn){ return; }
         runBtn.addEventListener("click", handleRun, true);
+        var input = document.getElementById("rexChatInput");
+        var messagesNode = document.getElementById("rexChatMessages");
+        var status = document.getElementById("rexChatStatus");
+        var fileInput = document.getElementById("rexChatFileInput");
+        var fileStatusNode = document.getElementById("rexChatFileStatus");
+        var messages = [];
+        var attachedFile = null;
+        var sending = false;
+        function setRexStatus(text, tone){
+          var value = (text || "").replace(/^\s+|\s+$/g, "");
+          if(!status){ return; }
+          status.hidden = !value;
+          status.className = "auth-status " + (tone || "neutral");
+          status.innerHTML = escapeHtml(value);
+        }
+        function setFileStatus(text, tone){
+          if(!fileStatusNode){ return; }
+          fileStatusNode.className = "upload-status" + (tone ? " " + tone : "");
+          fileStatusNode.innerHTML = escapeHtml(text || "");
+        }
+        function clearAttachment(){
+          attachedFile = null;
+          if(fileInput){ fileInput.value = ""; }
+          setFileStatus("No file attached.", "");
+        }
         function readDocxFile(file){
           return new Promise(function(resolve, reject){
             var host = null;
@@ -3625,6 +3688,33 @@
             clearAttachment();
           }
         }
+        function currentSignedInName(){
+          var session = null;
+          try {
+            session = typeof resolveSession === "function" ? resolveSession() : parseJson(window.localStorage && window.localStorage.getItem(authSessionKey));
+          } catch (error) {
+            session = null;
+          }
+          return session && session.name ? String(session.name) : "";
+        }
+        function escapeNamePattern(value){
+          return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        }
+        function sanitizeNameArtifactsText(value){
+          var output = String(value || "");
+          var accountName = currentSignedInName();
+          var compactName = "";
+          if(!accountName){ return output; }
+          output = output.replace(new RegExp(escapeNamePattern(accountName) + "\\s*hihi\\b", "ig"), accountName);
+          compactName = accountName.replace(/\s+/g, "");
+          if(compactName && compactName !== accountName){
+            output = output.replace(new RegExp(escapeNamePattern(compactName) + "hihi\\b", "ig"), accountName);
+          }
+          return output;
+        }
+        function sanitizeAssistantText(value){
+          return sanitizeNameArtifactsText(String(value || "").replace(/\r\n/g, "\n").replace(/^\s*\*\s?/gm, "").replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1").replace(/\*/g, "").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").replace(/[ \t]{2,}/g, " ").trim());
+        }
         function render(){
           var html = "";
           var i, item, text;
@@ -3637,7 +3727,7 @@
           messagesNode.className = "rex-chat-messages";
           for(i = 0; i < messages.length; i += 1){
             item = messages[i] || {};
-            text = item.pending ? "Rex is thinking..." : String(item.text || "");
+            text = item.pending ? "Rex is thinking..." : (item.role === "assistant" ? sanitizeAssistantText(item.text || "") : String(item.text || ""));
             html += '<article class="rex-chat-bubble ' + (item.role === "assistant" ? "assistant" : "user") + '"><p class="rex-chat-role">' + (item.role === "assistant" ? "Rex" : "You") + '</p><div class="rex-chat-text">' + esc(text).replace(/\n/g, "<br>") + '</div></article>';
           }
           messagesNode.innerHTML = html;
@@ -3648,14 +3738,13 @@
           for(i = messages.length - 1; i >= 0; i -= 1){
             if(messages[i] && messages[i].role === "assistant" && messages[i].pending){
               messages[i].pending = false;
-              messages[i].text = text || "";
+              messages[i].text = sanitizeAssistantText(text || "");
               return;
             }
           }
-          messages.push({ role: "assistant", text: text || "" });
+          messages.push({ role: "assistant", text: sanitizeAssistantText(text || "") });
         }
         function buildPrompt(userMessage){
-          var session = null;
           var lines = [
             "You are Rex, a polished interview coach inside Job Match Agent.",
             "Write in polished UK English and behave like a strong interview coach rather than a general chatbot.",
@@ -3667,19 +3756,11 @@
             "If the user asks for writing help, improve the wording so it sounds interview-ready, specific, and persuasive.",
             "Do not claim to have completed actions you have not completed."
           ];
-          try {
-            session = parseJson(window.localStorage && window.localStorage.getItem(authSessionKey));
-          } catch (error) {
-            session = null;
-          }
-          if(session && session.name){
-            lines.push("Signed-in user name: " + session.name);
-          }
           if(messages.length){
             lines.push("Conversation so far:");
             messages.slice(-8).forEach(function(item){
               if(item && item.text && !item.pending){
-                lines.push((item.role === "assistant" ? "Rex" : "User") + ": " + item.text);
+                lines.push((item.role === "assistant" ? "Rex" : "User") + ": " + (item.role === "assistant" ? sanitizeAssistantText(item.text) : item.text));
               }
             });
           }
@@ -3820,12 +3901,14 @@
           }
           return lines.join("\n");
         }
+        var rexSendBtn = document.getElementById("sendRexChatBtn");
+        var clearBtn = document.getElementById("clearRexChatBtn");
         async function send(){
           var userMessage = input && input.value ? String(input.value).replace(/^\s+|\s+$/g, "") : "";
           var result = null;
           if(sending){ return false; }
           if(!userMessage){
-            setStatus("Type a message for Rex first.", "warn");
+            setRexStatus("Type a message for Rex first.", "warn");
             return false;
           }
           sending = true;
@@ -3840,8 +3923,8 @@
               input.value = "";
               input.disabled = true;
             }
-            if(sendBtn){ sendBtn.disabled = true; }
-            setStatus("Rex is thinking...", "neutral");
+            if(rexSendBtn){ rexSendBtn.disabled = true; }
+            setRexStatus("Rex is thinking...", "neutral");
             if(window.top && typeof window.top.callOpenAIResponses === "function"){
               result = desktopReply(userMessage);
             } else {
@@ -3849,19 +3932,19 @@
             }
             if(result && result.ok){
               replacePending(String(result.text || ""));
-              setStatus("Rex replied.", "good");
+              setRexStatus("", "good");
             } else {
               replacePending(localReply(userMessage));
-              setStatus("Rex replied using the built-in interview coach.", "good");
+              setRexStatus("", "good");
             }
             render();
           } catch (error5) {
             replacePending(localReply(userMessage));
             render();
-            setStatus("Rex replied using the built-in interview coach.", "good");
+            setRexStatus("", "good");
           } finally {
             sending = false;
-            if(sendBtn){ sendBtn.disabled = false; }
+            if(rexSendBtn){ rexSendBtn.disabled = false; }
             if(input){
               input.disabled = false;
               try { input.focus(); } catch (error4) {}
@@ -3869,8 +3952,8 @@
           }
           return false;
         }
-        if(sendBtn){
-          sendBtn.onclick = function(){
+        if(rexSendBtn){
+          rexSendBtn.onclick = function(){
             if(window.jobMatchDispatchRexSend){ window.jobMatchDispatchRexSend(); return false; }
             send();
             return false;
@@ -3881,7 +3964,7 @@
             messages = [];
             clearAttachment();
             render();
-            setStatus("Chat cleared. Ask Rex a new question anytime.", "neutral");
+            setRexStatus("Chat cleared. Ask Rex a new question anytime.", "neutral");
             return false;
           };
         }
@@ -4424,7 +4507,7 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="./ai-session-memory.js?v=20260417aiwhole11"></script>
-<script src="./app.js?v=20260428rexsendfix01"></script>
+<script src="./app.js?v=20260429accountsummaryfix01"></script>
     <script src="./career-path-library.js?v=20260417career50clean01"></script>
     <script src="./cv-generator.js?v=20260427aifix01"></script>
     <script>
@@ -4957,6 +5040,10 @@
     </script>
 </body>
 </html>
+
+
+
+
 
 
 
