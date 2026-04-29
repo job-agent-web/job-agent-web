@@ -49,7 +49,7 @@ if(el.profileUpload2){el.profileUpload2.onchange=function(){loadProfileFile(this
 if(el.signOutBtn){el.signOutBtn.onclick=function(){signOutHostedUser();return false;};}
 if(el.claimWeeklyDayBtn){el.claimWeeklyDayBtn.onclick=function(){claimWeeklyFreeDay();return false;};}
 if(el.themeToggleBtn){el.themeToggleBtn.onclick=function(){toggleThemeMode();return false;};}
-if(el.pasteCvToggle1){el.pasteCvToggle1.onclick=function(){if(el.coverLetterUseGenerated){el.coverLetterUseGenerated.checked=true;}if(el.coverLetterUseUploaded){el.coverLetterUseUploaded.checked=false;}persistStoredCvs();updateCoverLetterCvSourceStatus();refreshCoverLetterReadiness();if(window.jobMatchGeneratedCvAccess&&window.jobMatchGeneratedCvAccess.openPanel){window.jobMatchGeneratedCvAccess.openPanel();}return false;};}
+if(el.pasteCvToggle1){el.pasteCvToggle1.onclick=function(){if(el.coverLetterUseGenerated){el.coverLetterUseGenerated.checked=true;}if(el.coverLetterUseUploaded){el.coverLetterUseUploaded.checked=false;}persistStoredCvs();updateCoverLetterCvSourceStatus();refreshCoverLetterReadiness();return false;};}
 if(el.pasteCvToggle2){el.pasteCvToggle2.onclick=function(){if(el.activeCv2){el.activeCv2.checked=true;persistStoredCvs();}togglePasteCvPane(2);return false;};}
 if(el.savePasteCv1){el.savePasteCv1.onclick=function(){savePastedCv(1);return false;};}
 if(el.savePasteCv2){el.savePasteCv2.onclick=function(){savePastedCv(2);return false;};}
