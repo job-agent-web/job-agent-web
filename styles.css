@@ -404,6 +404,50 @@ body::after {
   opacity: 0.78;
 }
 
+.claim-weekly-day-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: -2px 0 12px;
+}
+
+.claim-weekly-day-wrap[hidden] {
+  display: none !important;
+}
+
+.claim-weekly-day-status {
+  margin-top: 0;
+  padding: 9px 12px;
+  font-size: 0.82rem;
+  color: #ffffff !important;
+  flex: 1 1 260px;
+}
+
+.claim-weekly-day-status.neutral {
+  color: #ffffff !important;
+  background: rgba(17, 32, 59, 0.56);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.claim-weekly-day-status.good {
+  color: #ffffff !important;
+  background: rgba(6, 118, 71, 0.76);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.claim-weekly-day-status.warn {
+  color: #ffffff !important;
+  background: rgba(180, 83, 9, 0.82);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.claim-weekly-day-status.bad {
+  color: #ffffff !important;
+  background: rgba(180, 35, 24, 0.78);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
 .hero-chip {
   display: inline-flex;
   align-items: center;

@@ -1,5 +1,6 @@
 ﻿const aiProviders = require("./_ai-provider-failover");
 const aiHistory = require("./_ai-history");
+const COVER_LETTER_PROVIDER_ORDER = ["gptoss", "gptoss", "gemini", "cloudflare", "huggingface"];
 
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
@@ -31,7 +32,7 @@ exports.handler = async function (event) {
 
     const result = await aiProviders.generateWithFailover({
       model: model,
-      providerOrder: ["gptoss", "gemini", "cloudflare", "huggingface"],
+      providerOrder: COVER_LETTER_PROVIDER_ORDER,
       systemInstruction: buildSystemInstruction(),
       contents: [
         {
@@ -54,8 +55,8 @@ exports.handler = async function (event) {
       ],
       temperature: 0.7,
       topP: 0.95,
-      maxOutputTokens: wordRange.max > 1000 ? 1800 : 1600,
-      cycles: 3
+      maxOutputTokens: wordRange.max > 1000 ? 2400 : 2200,
+      cycles: 4
     });
 
     if (!result.ok) {
@@ -67,10 +68,12 @@ exports.handler = async function (event) {
     }
 
     let finalText = cleanCoverLetterText(result.text, coverLetterName);
+    let finalProvider = result.provider;
+    let finalModel = result.model;
     if (needsRewrite(finalText, wordRange)) {
       const rewrite = await aiProviders.generateWithFailover({
         model: model,
-        providerOrder: ["gptoss", "gemini", "cloudflare", "huggingface"],
+        providerOrder: COVER_LETTER_PROVIDER_ORDER,
         systemInstruction: buildRewriteSystemInstruction(),
         contents: [
           {
@@ -99,6 +102,45 @@ exports.handler = async function (event) {
       });
       if (rewrite.ok && rewrite.text) {
         finalText = cleanCoverLetterText(rewrite.text, coverLetterName);
+        finalProvider = rewrite.provider;
+        finalModel = rewrite.model;
+      }
+    }
+
+    if (countWords(finalText) < wordRange.min) {
+      const expansion = await aiProviders.generateWithFailover({
+        model: model,
+        providerOrder: COVER_LETTER_PROVIDER_ORDER,
+        systemInstruction: buildExpansionSystemInstruction(),
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: buildExpansionPrompt({
+                  draft: finalText,
+                  mode,
+                  jobTitle,
+                  company,
+                  jobDescription,
+                  cvText,
+                  coverLetterName,
+                  wordRange,
+                  previousOutputs
+                })
+              }
+            ]
+          }
+        ],
+        temperature: 0.6,
+        topP: 0.92,
+        maxOutputTokens: wordRange.max > 1000 ? 2400 : 2200,
+        cycles: 4
+      });
+      if (expansion.ok && expansion.text) {
+        finalText = cleanCoverLetterText(expansion.text, coverLetterName);
+        finalProvider = expansion.provider;
+        finalModel = expansion.model;
       }
     }
 
@@ -114,9 +156,10 @@ exports.handler = async function (event) {
 
     return json(200, {
       ok: true,
-      model: result.model,
-      provider: result.provider,
-      text: finalText
+      model: finalModel,
+      provider: finalProvider,
+      text: finalText,
+      wordCount: countWords(finalText)
     });
   } catch (error) {
     return json(200, {
@@ -208,6 +251,21 @@ function buildRewriteSystemInstruction() {
   ].join("\n");
 }
 
+function buildExpansionSystemInstruction() {
+  return [
+    "You are expanding an under-length cover letter into a premium final version.",
+    "Write in polished UK English.",
+    "Use only the supplied CV role evidence and job description.",
+    "Keep the structure persuasive, specific, and submission-ready.",
+    "Expand the draft into 7 to 9 substantial paragraphs.",
+    "Do not summarise the draft.",
+    "Do not use bullet points, markdown, headings, or meta commentary.",
+    "Do not mention the CV, advert, job description, or drafting process.",
+    "Never mention employment dates, months, years, or date ranges anywhere in the final cover letter.",
+    "Refer to previous experience by role title only."
+  ].join("\n");
+}
+
 function buildRewritePrompt(input) {
   const signoff = input.coverLetterName ? "Yours faithfully\n" + input.coverLetterName : "Yours faithfully";
   return [
@@ -217,6 +275,7 @@ function buildRewritePrompt(input) {
     "Improve structure, specificity, and quality.",
     "Critically discuss each relevant role in relation to the job requirements.",
     "Make the role-by-role evidence sharper and more analytical.",
+    "If the draft is too short, expand it into 7 to 9 substantial paragraphs and do not return fewer than " + input.wordRange.min + " words.",
     "Remove repetition and any meta commentary about the CV or advert.",
     "Never mention employment dates, months, years, or date ranges anywhere in the final cover letter.",
     "Refer to previous experience by role title only, not by employer timeline strings.",
@@ -233,6 +292,36 @@ function buildRewritePrompt(input) {
     input.jobDescription,
     "",
     "Draft to rewrite:",
+    input.draft,
+    "",
+    aiHistory.buildAvoidanceBlock(input.previousOutputs, "Previous cover letters to avoid repeating")
+  ].join("\n");
+}
+
+function buildExpansionPrompt(input) {
+  const signoff = input.coverLetterName ? "Yours faithfully\n" + input.coverLetterName : "Yours faithfully";
+  return [
+    "Expand this under-length cover letter into a full premium final draft.",
+    "Keep it strictly between " + input.wordRange.min + " and " + input.wordRange.max + " words.",
+    "Make it read like a refined final application, not a template or summary.",
+    "Use role-based evidence from the CV extract and blend it with the job description requirements.",
+    "Write 7 to 9 substantial paragraphs before the sign-off.",
+    "Do not use bullet points or headings.",
+    "Do not mention the CV, the job description, the advert, or the drafting process.",
+    "Never mention employment dates, months, years, or date ranges anywhere in the final cover letter.",
+    "End with this sign-off exactly:",
+    signoff,
+    "",
+    "Job title: " + input.jobTitle,
+    "Company: " + input.company,
+    "",
+    "CV role evidence only:",
+    stripCoverLetterDateText(input.cvText),
+    "",
+    "Job description:",
+    input.jobDescription,
+    "",
+    "Short draft to expand:",
     input.draft,
     "",
     aiHistory.buildAvoidanceBlock(input.previousOutputs, "Previous cover letters to avoid repeating")
@@ -554,6 +643,7 @@ function json(statusCode, payload) {
     body: typeof payload === "string" ? payload : JSON.stringify(payload)
   };
 }
+
 
 
 

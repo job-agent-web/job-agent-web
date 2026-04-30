@@ -698,6 +698,10 @@
           <div id="accountSummary" class="account-summary">Checking sign-in...</div>
           <button id="signOutBtn" class="ghost-button small-button" type="button">Sign Out</button>
         </div>
+        <div id="claimWeeklyDayWrap" class="claim-weekly-day-wrap" hidden>
+          <button id="claimWeeklyDayBtn" class="ghost-button small-button" type="button" hidden>Claim 1 Free Day</button>
+          <div id="claimWeeklyDayStatus" class="auth-status neutral claim-weekly-day-status" hidden></div>
+        </div>
         <div id="accountBalances" class="account-balances"></div>
         <div class="manual-grid scraper-input-grid hero-search-grid">
           <label>
@@ -1163,21 +1167,21 @@
         <div class="pricing-grid">
           <article id="monthlyPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 10 pounds with Revolut" onclick="if(window.jobMatchOpenMonthlyPayment){return window.jobMatchOpenMonthlyPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=1000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
             <h3>Monthly</h3>
-            <p class="price-tag">£10</p>
+            <p class="price-tag">ï¿½10</p>
           </article>
           <article id="sixMonthPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 50 pounds with Revolut" onclick="if(window.jobMatchOpenSixMonthPayment){return window.jobMatchOpenSixMonthPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=5000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
             <h3>6 Months</h3>
-            <p class="price-tag">£50</p>
+            <p class="price-tag">ï¿½50</p>
             <p class="helper-text">Get 1 week free</p>
           </article>
           <article id="yearlyPaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 100 pounds with Revolut" onclick="if(window.jobMatchOpenYearlyPayment){return window.jobMatchOpenYearlyPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=10000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
             <h3>Yearly</h3>
-            <p class="price-tag">£100</p>
+            <p class="price-tag">ï¿½100</p>
             <p class="helper-text">Get one month free</p>
           </article>
           <article id="lifetimePaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 200 pounds with Revolut" onclick="if(window.jobMatchOpenLifetimePayment){return window.jobMatchOpenLifetimePayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=20000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
             <h3>Premium Access (Lifetime)</h3>
-            <p class="price-tag">£200<span> one-off</span></p>
+            <p class="price-tag">ï¿½200<span> one-off</span></p>
           </article>
         </div>
         <p class="helper-text">After payment, please allow a few minutes to update plan.</p>
@@ -3267,14 +3271,20 @@
         function getSource(){
           var generatedText = getGeneratedCvText();
           var uploadedText = trimText(uploadedCv && uploadedCv.value) || getStoredCvSlotText(1) || getStoredCvSlotText(2);
-          if(sourceGenerated && sourceGenerated.checked && generatedText){
-            return { label: "Generated CV", text: generatedText };
+          if(sourceGenerated && sourceGenerated.checked){
+            if(generatedText){
+              return { label: "Generated CV", text: extractUploadedCvRoleEvidence(generatedText), sourceType: "generated" };
+            }
+            return { label: "Role + job description", text: "", sourceType: "role-only" };
           }
-          if(sourceUploaded && sourceUploaded.checked && uploadedText){
-            return { label: "Uploaded CV", text: extractUploadedCvRoleEvidence(uploadedText) };
+          if(sourceUploaded && sourceUploaded.checked){
+            if(uploadedText){
+              return { label: "Uploaded CV", text: extractUploadedCvRoleEvidence(uploadedText), sourceType: "uploaded" };
+            }
+            return { label: "Role + job description", text: "", sourceType: "role-only" };
           }
 
-          return null;
+          return { label: "Role + job description", text: "", sourceType: "role-only" };
         }
         function lookupInlineOfficialCompanyWebsite(company){
           var key = trimVisaText(company || "");
@@ -3344,7 +3354,6 @@
           var title = trimText(jobTitleInput && jobTitleInput.value) || inferField(raw, ["job title", "title", "role"]);
           var company = trimText(companyInput && companyInput.value) || inferField(raw, ["company", "employer", "organisation", "organization"]);
           var missing = [];
-          if(!source){ missing.push("CV source"); }
           if(!title){ missing.push("job title"); }
           if(!company){ missing.push("company name"); }
           if(!raw){ missing.push("job description"); }
@@ -3368,19 +3377,25 @@
         function getCoverLetterApiBase(){
           var protocol = String(window.location && window.location.protocol || "");
           if(protocol.indexOf("http") === 0){ return ""; }
-          return "https://job-match-agent-web.netlify.app";
+          return "https://aquamarine-puppy-2a08ef.netlify.app";
+        }
+        function minimumInlineCoverLetterWords(data){
+          var range = data && data.wordRange ? data.wordRange : getWordRange();
+          return Math.max(650, (range.min || 750) - 80);
         }
         async function callDirectGeminiCoverLetter(data){
           var response;
           var payload;
           var result;
+          var text = "";
+          var wordCount = 0;
           payload = {
-            model: "gemini-2.5-flash-lite",
+            model: "openai/gpt-oss-120b:fastest",
             mode: "civil",
             jobTitle: data.title,
             company: data.company,
             jobDescription: data.raw,
-            cvText: data.source.text,
+            cvText: data.source.text || ("Role title only: " + data.title + ". No CV evidence was supplied, so write from the role title and the job description only. Do not invent employers, dates, achievements, or qualifications."),
             coverLetterName: data.name,
             wordRange: data.wordRange.value,
             previousOutputs: []
@@ -3394,7 +3409,12 @@
           if(!result || !result.ok || !trimText(result.text)){
             throw new Error((result && result.message) || "The cover-letter generator did not return usable text.");
           }
-          return { text: trimText(result.text), model: result.model || "" };
+          text = trimText(result.text);
+          wordCount = Number(result && result.wordCount || countWords(text));
+          if(wordCount < minimumInlineCoverLetterWords(data)){
+            throw new Error("The AI returned an incomplete cover-letter draft.");
+          }
+          return { text: text, model: result.model || "", wordCount: wordCount };
         }
         function renderAiLetter(data, letter, model){
           var html = "";
@@ -4438,9 +4458,9 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   
     <script src="./ai-session-memory.js?v=20260417aiwhole11"></script>
-<script src="./app.js?v=20260429coveremergency01"></script>
+<script src="./app.js?v=20260430cvreadfix03"></script>
     <script src="./career-path-library.js?v=20260429career1000b01"></script>
-    <script src="./cv-generator.js?v=20260429removepdf01"></script>
+    <script src="./cv-generator.js?v=20260430cvstatus01"></script>
     <script>
       (function(){
         function daysState(){
@@ -4971,6 +4991,11 @@
     </script>
 </body>
 </html>
+
+
+
+
+
 
 
 
