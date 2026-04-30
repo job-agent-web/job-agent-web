@@ -1,15 +1,5 @@
-const aiProviders = require("./_ai-provider-failover");
+﻿const aiProviders = require("./_ai-provider-failover");
 const aiHistory = require("./_ai-history");
-const generatorConfigMetadataKey = "cover_letter_generator_config";
-const defaultGeneratorConfig = {
-  coverLetterSample1: "",
-  coverLetterSample2: "",
-  coverLetterSample3: ""
-};
-let hostedGeneratorConfigCache = {
-  expiresAt: 0,
-  value: null
-};
 
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
@@ -31,7 +21,6 @@ exports.handler = async function (event) {
     const coverLetterName = String(body.coverLetterName || "").trim();
     const wordRange = normalizeWordRange(body.wordRange);
     const previousOutputs = aiHistory.normalizePreviousOutputs(body.previousOutputs);
-    const generatorConfig = await loadHostedGeneratorConfig();
 
     if (!jobTitle || !company || !jobDescription || !rawCvText) {
       return json(200, {
@@ -43,7 +32,7 @@ exports.handler = async function (event) {
     const result = await aiProviders.generateWithFailover({
       model: model,
       providerOrder: ["gemini", "gptoss", "cloudflare", "huggingface"],
-      systemInstruction: buildSystemInstruction(generatorConfig),
+      systemInstruction: buildSystemInstruction(),
       contents: [
         {
           role: "user",
@@ -57,9 +46,8 @@ exports.handler = async function (event) {
                 cvText,
                 coverLetterName,
                 wordRange,
-                previousOutputs,
-                generatorConfig
-              }, generatorConfig)
+                previousOutputs
+              })
             }
           ]
         }
@@ -83,7 +71,7 @@ exports.handler = async function (event) {
       const rewrite = await aiProviders.generateWithFailover({
         model: model,
         providerOrder: ["gemini", "gptoss", "cloudflare", "huggingface"],
-        systemInstruction: buildRewriteSystemInstruction(generatorConfig),
+        systemInstruction: buildRewriteSystemInstruction(),
         contents: [
           {
             role: "user",
@@ -98,9 +86,8 @@ exports.handler = async function (event) {
                   cvText,
                   coverLetterName,
                   wordRange,
-                  previousOutputs,
-                  generatorConfig
-                }, generatorConfig)
+                  previousOutputs
+                })
               }
             ]
           }
@@ -139,9 +126,8 @@ exports.handler = async function (event) {
   }
 };
 
-function buildSystemInstruction(generatorConfig) {
-  const config = normalizeGeneratorConfig(generatorConfig);
-  const lines = [
+function buildSystemInstruction() {
+  return [
     "You write premium job application cover letters.",
     "Write in polished UK English.",
     "Use the STAR approach internally to shape practical evidence in every evidence paragraph.",
@@ -162,24 +148,13 @@ function buildSystemInstruction(generatorConfig) {
     "Do not write self-referential lines about the CV, the advert, or what the applicant would do in the final application.",
     "Do not write generic claims such as 'my CV shows', 'the advert highlights', 'I would use the final application', or similar meta commentary.",
     "Every paragraph should advance a distinct point relevant to the role.",
-    "When previous session outputs are provided, make this cover letter clearly different from them in structure, sequencing, and wording.",
-    "Follow any administrator-defined cover letter logic provided in the prompt.",
-    "If administrator reference cover letters are provided, use them only as quality, tone, structure, and sophistication benchmarks.",
-    "Never copy wording, private details, or unsupported claims from the administrator reference cover letters."
-  ];
-  if (hasCoverLetterSamples(config)) {
-    lines.push("Up to three administrator reference cover letters are active. Read CL1, CL2, and CL3 together and intelligently synthesise their strongest qualities into one fresh letter.");
-    lines.push("Blend the sharpest opening logic, the best paragraph sequencing, the most persuasive role-evidence integration, the most polished transitions, and the strongest closing from across the active samples.");
-    lines.push("The final result must feel guided by all active reference samples rather than paraphrasing any one sample.");
-  }
-  return lines.join("\n");
+    "When previous session outputs are provided, make this cover letter clearly different from them in structure, sequencing, and wording."
+  ].join("\n");
 }
 
-function buildUserPrompt(input, generatorConfig) {
+function buildUserPrompt(input) {
   const tone = input.mode === "nhs" ? "NHS-style" : "professional";
   const signoff = input.coverLetterName ? "Yours faithfully\n" + input.coverLetterName : "Yours faithfully";
-  const config = normalizeGeneratorConfig(generatorConfig || input.generatorConfig);
-  const referenceSamples = buildReferenceSamplesBlock(config);
 
   return [
     "Write a unique premium cover letter for this application.",
@@ -206,8 +181,6 @@ function buildUserPrompt(input, generatorConfig) {
     "Job title: " + input.jobTitle,
     "Company: " + input.company,
     "",
-    referenceSamples ? "Administrator cover letter reference samples (style and quality guide only - do not copy wording or unsupported facts):\nReview all active samples together, then synthesise the best qualities across them: opening strength, paragraph depth, role evidence cadence, persuasive tone, and closing polish.\n" + referenceSamples : "No administrator cover letter reference samples are active for this generation.",
-    "",
     "Candidate CV role evidence only:",
     input.cvText,
     "",
@@ -218,7 +191,7 @@ function buildUserPrompt(input, generatorConfig) {
   ].join("\n");
 }
 
-function buildRewriteSystemInstruction(generatorConfig) {
+function buildRewriteSystemInstruction() {
   return [
     "You are rewriting a draft cover letter into a premium final version.",
     "Keep only evidence supported by the supplied CV text and job description.",
@@ -229,16 +202,12 @@ function buildRewriteSystemInstruction(generatorConfig) {
     "Rewrite any visible Situation, Task, Action, or Result content into natural connected paragraphs.",
     "Do not mention the CV, advert, job description, or drafting process.",
     "Do not use STAR headings, Situation/Task/Action/Result labels, bullet points, or markdown.",
-    "Make the result sound like a confident, highly tailored final application.",
-    "Follow any administrator-defined cover letter logic provided in the prompt.",
-    "If administrator reference cover letters are provided, use them only as refinement benchmarks and never copy their exact wording."
+    "Make the result sound like a confident, highly tailored final application."
   ].join("\n");
 }
 
-function buildRewritePrompt(input, generatorConfig) {
+function buildRewritePrompt(input) {
   const signoff = input.coverLetterName ? "Yours faithfully\n" + input.coverLetterName : "Yours faithfully";
-  const config = normalizeGeneratorConfig(generatorConfig || input.generatorConfig);
-  const referenceSamples = buildReferenceSamplesBlock(config);
   return [
     "Rewrite this cover letter into a stronger final draft.",
     "Keep it strictly between " + input.wordRange.min + " and " + input.wordRange.max + " words.",
@@ -249,8 +218,6 @@ function buildRewritePrompt(input, generatorConfig) {
     "Remove repetition and any meta commentary about the CV or advert.",
     "End with this sign-off exactly:",
     signoff,
-    "",
-    referenceSamples ? "Administrator cover letter reference samples (quality and structure guide only - do not copy wording):\nRefine the draft by synthesising the best qualities across all active samples, especially their strongest opening logic, paragraph sequencing, role analysis, transitions, and final close.\n" + referenceSamples : "No administrator cover letter reference samples are active for this refinement.",
     "",
     "Job title: " + input.jobTitle,
     "Company: " + input.company,
@@ -530,123 +497,6 @@ function hasDuplicateParagraphs(text) {
     seen.add(key);
   }
   return false;
-}
-
-async function loadHostedGeneratorConfig() {
-  const now = Date.now();
-  const supabaseUrl = trimText(process.env.SUPABASE_URL || "");
-  const serviceRoleKey = trimText(process.env.SUPABASE_SERVICE_ROLE_KEY || "");
-  let users = [];
-  let response;
-  let data;
-  if (hostedGeneratorConfigCache.value && hostedGeneratorConfigCache.expiresAt > now) {
-    return hostedGeneratorConfigCache.value;
-  }
-  if (!supabaseUrl || !serviceRoleKey) {
-    hostedGeneratorConfigCache = { expiresAt: now + 60000, value: normalizeGeneratorConfig(null) };
-    return hostedGeneratorConfigCache.value;
-  }
-  try {
-    response = await fetch(supabaseUrl + "/auth/v1/admin/users?page=1&per_page=200", {
-      headers: {
-        apikey: serviceRoleKey,
-        Authorization: "Bearer " + serviceRoleKey
-      }
-    });
-    if (response.ok) {
-      data = await response.json();
-      users = data && data.users ? data.users : [];
-    }
-  } catch (error) {
-    users = [];
-  }
-  hostedGeneratorConfigCache = {
-    expiresAt: now + 60000,
-    value: resolveHostedGeneratorConfig(users)
-  };
-  return hostedGeneratorConfigCache.value;
-}
-
-function resolveHostedGeneratorConfig(users) {
-  const list = Array.isArray(users) ? users : [];
-  let i;
-  let candidate = null;
-  for (i = 0; i < list.length; i += 1) {
-    if (list[i] && isAdminUser(list[i]) && list[i].user_metadata && list[i].user_metadata[generatorConfigMetadataKey]) {
-      candidate = list[i];
-      break;
-    }
-  }
-  if (!candidate) {
-    for (i = 0; i < list.length; i += 1) {
-      if (list[i] && list[i].user_metadata && list[i].user_metadata[generatorConfigMetadataKey]) {
-        candidate = list[i];
-        break;
-      }
-    }
-  }
-  if (!candidate) {
-    for (i = 0; i < list.length; i += 1) {
-      if (isAdminUser(list[i])) {
-        candidate = list[i];
-        break;
-      }
-    }
-  }
-  if (!candidate && list.length) {
-    candidate = list[0];
-  }
-  return normalizeGeneratorConfig(candidate && candidate.user_metadata ? candidate.user_metadata[generatorConfigMetadataKey] : null);
-}
-
-function normalizeGeneratorConfig(input) {
-  const source = input && typeof input === "object" ? input : {};
-  const config = {};
-  let key;
-  let value;
-  if (!trimText(source.coverLetterSample1) && trimText(source.masterCoverLetterTemplate)) {
-    source.coverLetterSample1 = trimText(source.masterCoverLetterTemplate);
-  }
-  for (key in defaultGeneratorConfig) {
-    if (Object.prototype.hasOwnProperty.call(defaultGeneratorConfig, key)) {
-      value = trimText(source[key]);
-      config[key] = value || defaultGeneratorConfig[key];
-    }
-  }
-  return config;
-}
-
-function isAdminUser(user) {
-  return /^(admin|super_admin)$/i.test(trimText(user && user.user_metadata && user.user_metadata.role));
-}
-
-function trimText(value) {
-  return String(value || "").trim();
-}
-
-function trimSampleText(value, limit) {
-  return trimText(value).slice(0, limit || 3500);
-}
-
-function hasCoverLetterSamples(config) {
-  return !!(
-    trimText(config && config.coverLetterSample1) ||
-    trimText(config && config.coverLetterSample2) ||
-    trimText(config && config.coverLetterSample3)
-  );
-}
-
-function buildReferenceSamplesBlock(config) {
-  const normalized = normalizeGeneratorConfig(config);
-  const samples = [
-    { label: "CL1", text: trimSampleText(normalized.coverLetterSample1) },
-    { label: "CL2", text: trimSampleText(normalized.coverLetterSample2) },
-    { label: "CL3", text: trimSampleText(normalized.coverLetterSample3) }
-  ].filter((sample) => sample.text);
-  if (!samples.length) {
-    return "";
-  }
-  return samples.map((sample) => sample.label + ":\n" + sample.text).join("\n\n");
 }
 
 function normalizeModel(input) {
