@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Job Match Agent</title>
-  <link rel="stylesheet" href="./styles.css?v=20260429cvformat01">
+  <link rel="stylesheet" href="./styles.css?v=20260514darkpanes01">
   <script>
     window.JOB_MATCH_LOCAL_UNLOCK_PREMIUM = false;
     if(typeof window.normalizeAccountPlanType !== "function"){
@@ -55,6 +55,7 @@
         sponsorSearchToggleBtn: ["sponsorSearchPanel", "sponsorSearchPanelBody", "sponsorSearchToggleIcon", "panel sponsor-search-panel collapsed-panel open", "panel sponsor-search-panel collapsed-panel"],
         visaJobsToggleBtn: ["visaJobsPanel", "visaJobsPanelBody", "visaJobsToggleIcon", "panel visa-jobs-panel collapsed-panel open", "panel visa-jobs-panel collapsed-panel"],
         remoteJobsToggleBtn: ["remoteJobsPanel", "remoteJobsPanelBody", "remoteJobsToggleIcon", "panel remote-jobs-panel collapsed-panel open", "panel remote-jobs-panel collapsed-panel"],
+        cvScorerToggleBtn: ["cvScorerPanel", "cvScorerPanelBody", "cvScorerToggleIcon", "panel cv-scorer-panel collapsed-panel open", "panel cv-scorer-panel collapsed-panel"],
         careerPathToggleBtn: ["careerPathPanel", "careerPathPanelBody", "careerPathToggleIcon", "panel career-path-panel collapsed-panel open", "panel career-path-panel collapsed-panel"],
         interviewQuestionsToggleBtn: ["interviewQuestionsPanel", "interviewQuestionsPanelBody", "interviewQuestionsToggleIcon", "panel interview-questions-panel collapsed-panel open", "panel interview-questions-panel collapsed-panel"],
         rexChatToggleBtn: ["rexChatPanel", "rexChatPanelBody", "rexChatToggleIcon", "panel rex-chat-panel collapsed-panel open", "panel rex-chat-panel collapsed-panel"]
@@ -94,7 +95,7 @@
         return !!(state.plan === "6 months" || state.plan === "six months" || state.plan === "6 month" || state.plan === "six month" || state.plan === "6months" || state.plan === "6months subscription" || state.plan === "6 month subscription" || state.plan === "6 month plan" || state.plan === "12 months" || state.plan === "12 month" || state.plan === "12months" || state.plan === "12 month subscription" || state.plan === "12 months subscription" || state.plan === "yearly" || state.plan === "annual" || state.plan === "annual plan" || state.plan === "year" || state.plan === "one year" || state.plan === "one year subscription" || state.plan === "lifetime" || state.plan === "life time" || state.plan === "lifetime access" || state.plan === "premium" || state.plan === "premium access");
       }
       function applyLocalPremiumPaneState(kind){
-        var map = kind === "rex" ? {button:"rexChatToggleBtnLocal", body:"rexChatPanelBody", panel:"rexChatPanel", icon:"rexChatToggleIconLocal", badge:"rexChatLockBadgeLocal", name:"Pane 7 - Chat with Rex"} : {button:"visaJobsToggleBtnLocal", body:"visaJobsPanelBody", panel:"visaJobsPanel", icon:"visaJobsToggleIconLocal", badge:"visaJobsLockBadgeLocal", name:"Pane 4 - Land a Job with Visa Sponsorship"};
+        var map = kind === "rex" ? {button:"rexChatToggleBtnLocal", body:"rexChatPanelBody", panel:"rexChatPanel", icon:"rexChatToggleIconLocal", badge:"rexChatLockBadgeLocal", name:"Pane 9 - Chat with Rex"} : {button:"visaJobsToggleBtnLocal", body:"visaJobsPanelBody", panel:"visaJobsPanel", icon:"visaJobsToggleIconLocal", badge:"visaJobsLockBadgeLocal", name:"Pane 4 - Land a Job with Visa Sponsorship"};
         var button = byId(map.button);
         var body = byId(map.body);
         var panel = byId(map.panel);
@@ -263,7 +264,7 @@
         plan = normalizePanePlan(session && (session.planType || session.plan_type || session.plan || session.subscriptionPlan || session.subscription_plan));
         if(role === "admin" || role === "super admin" || role === "super_admin"){ clearInlinePremiumPaneNotice(); return true; }
         if(isEarlySixMonthPlusPlan(plan) || earlyDaysRemaining(session) === Infinity || earlyDaysRemaining(session) > 30){ clearInlinePremiumPaneNotice(); return true; }
-        paneName = buttonId === "visaJobsToggleBtn" ? "Pane 4 - Land a Job with Visa Sponsorship" : "Pane 7 - Chat with Rex";
+        paneName = buttonId === "visaJobsToggleBtn" ? "Pane 4 - Land a Job with Visa Sponsorship" : "Pane 9 - Chat with Rex";
         modal = byId("limitModal");
         title = byId("limitModalTitle");
         text = byId("limitModalText");
@@ -625,7 +626,7 @@
         if(role === "admin" || role === "super admin" || role === "super_admin"){ clearInlinePremiumPaneNotice(); return true; }
         if(accountDaysLeftText(session) === "Unlimited"){ clearInlinePremiumPaneNotice(); return true; }
         if(/^(\d+)\s+day/i.test(accountDaysLeftText(session)) && Number((accountDaysLeftText(session).match(/^(\d+)\s+day/i)||[])[1]||0) > 30){ clearInlinePremiumPaneNotice(); return true; }
-        paneName = buttonId === "visaJobsToggleBtn" ? "Pane 4 - Land a Job with Visa Sponsorship" : "Pane 7 - Chat with Rex";
+        paneName = buttonId === "visaJobsToggleBtn" ? "Pane 4 - Land a Job with Visa Sponsorship" : "Pane 9 - Chat with Rex";
         modal = byId("limitModal");
         title = byId("limitModalTitle");
         text = byId("limitModalText");
@@ -1051,9 +1052,60 @@
         </div>
       </section>
 
+      <section class="panel cv-scorer-panel collapsed-panel" id="cvScorerPanel">
+        <button id="cvScorerToggleBtn" class="section-toggle" type="button" aria-expanded="false" aria-controls="cvScorerPanelBody">
+          <span class="pane-title-with-lock"><span>6. CV Scorer</span><span id="cvScorerLockBadge" class="pane-lock-badge" hidden title="Renew your plan to unlock this pane">&#128274;</span></span>
+          <span id="cvScorerToggleIcon" class="toggle-icon">+</span>
+        </button>
+        <div id="cvScorerPanelBody" class="collapsed-body" hidden>
+          <div class="cv-scorer-header">
+            <div>
+              <p class="card-label">ATS CV Review</p>
+              <h3>Check how well your CV matches the role</h3>
+              <p class="helper-text">
+                Paste or upload a CV, add the role details, then get an ATS-style score with strengths, weaknesses, and practical improvements.
+              </p>
+            </div>
+            <button id="scoreCvBtn" class="primary-button cv-scorer-main-action" type="button">Score CV</button>
+          </div>
+
+          <div class="cv-scorer-actions" aria-label="CV scorer quick actions">
+            <button id="useGeneratedCvForScoreBtn" class="ghost-button cv-scorer-mini-action" type="button">
+              Use Generated CV
+            </button>
+            <label class="ghost-button cv-scorer-mini-action cv-scorer-upload-label">
+              Upload CV
+              <input id="cvScorerFileInput" class="native-upload-input" type="file" accept=".txt,.doc,.docx,.pdf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+            </label>
+          </div>
+
+          <div class="manual-grid sponsor-search-grid cv-scorer-grid">
+            <label class="full-span">
+              Target role
+              <input id="cvScorerJobTitle" type="text" placeholder="Data Analyst">
+            </label>
+            <label class="full-span">
+              Job description
+              <textarea id="cvScorerJobDescription" rows="6" placeholder="Paste the job description so the score can compare your CV against the role."></textarea>
+            </label>
+            <label class="full-span cv-scorer-cv-text-label">
+              CV text
+              <textarea id="cvScorerCvText" rows="10" placeholder="Paste your CV here, upload a CV, or click Use Generated CV."></textarea>
+            </label>
+          </div>
+
+          <div id="cvScorerStatus" class="auth-status neutral">
+            Paste or upload a CV, add the target role or job description, then click Score CV.
+          </div>
+          <div id="cvScorerResults" class="history-list empty-state">
+            No CV score generated yet.
+          </div>
+        </div>
+      </section>
+
       <section class="panel career-path-panel collapsed-panel" id="careerPathPanel">
         <button id="careerPathToggleBtn" class="section-toggle" type="button" aria-expanded="false" aria-controls="careerPathPanelBody">
-          <span class="pane-title-with-lock"><span>6. Career Path Planner</span><span id="careerPathLockBadge" class="pane-lock-badge" hidden title="Renew your plan to unlock this pane">&#128274;</span></span>
+          <span class="pane-title-with-lock"><span>7. Career Path Planner</span><span id="careerPathLockBadge" class="pane-lock-badge" hidden title="Renew your plan to unlock this pane">&#128274;</span></span>
           <span id="careerPathToggleIcon" class="toggle-icon">+</span>
         </button>
         <div id="careerPathPanelBody" class="collapsed-body" hidden>
@@ -1080,7 +1132,7 @@
 
       <section class="panel interview-questions-panel collapsed-panel" id="interviewQuestionsPanel">
         <button id="interviewQuestionsToggleBtn" class="section-toggle" type="button" aria-expanded="false" aria-controls="interviewQuestionsPanelBody">
-          <span class="pane-title-with-lock"><span>7. Get Possible Interview Questions</span><span id="interviewQuestionsLockBadge" class="pane-lock-badge" hidden title="Renew your plan to unlock this pane">&#128274;</span></span>
+          <span class="pane-title-with-lock"><span>8. Get Possible Interview Questions</span><span id="interviewQuestionsLockBadge" class="pane-lock-badge" hidden title="Renew your plan to unlock this pane">&#128274;</span></span>
           <span id="interviewQuestionsToggleIcon" class="toggle-icon">+</span>
         </button>
         <div id="interviewQuestionsPanelBody" class="collapsed-body" hidden>
@@ -1112,7 +1164,7 @@
 
       <section class="panel rex-chat-panel collapsed-panel" id="rexChatPanel">
         <button id="rexChatToggleBtnLocal" class="section-toggle" type="button" aria-expanded="false" aria-controls="rexChatPanelBody">
-          <span class="pane-title-with-lock"><span>8. Chat with Rex (Interview Coach)</span><span id="rexChatLockBadgeLocal" class="pane-lock-badge" hidden title="Upgrade your plan to unlock this pane">&#128274;</span></span>
+          <span class="pane-title-with-lock"><span>9. Chat with Rex (Interview Coach)</span><span id="rexChatLockBadgeLocal" class="pane-lock-badge" hidden title="Upgrade your plan to unlock this pane">&#128274;</span></span>
           <span id="rexChatToggleIconLocal" class="toggle-icon" aria-hidden="true">+</span>
         </button>
         <button id="rexChatToggleBtn" type="button" hidden aria-hidden="true" tabindex="-1"></button>
@@ -1167,21 +1219,21 @@
         <div class="pricing-grid">
           <article id="monthlyPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 10 pounds with Revolut" onclick="if(window.jobMatchOpenMonthlyPayment){return window.jobMatchOpenMonthlyPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=1000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
             <h3>Monthly</h3>
-            <p class="price-tag">ï¿½10</p>
+            <p class="price-tag">�10</p>
           </article>
           <article id="sixMonthPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 50 pounds with Revolut" onclick="if(window.jobMatchOpenSixMonthPayment){return window.jobMatchOpenSixMonthPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=5000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
             <h3>6 Months</h3>
-            <p class="price-tag">ï¿½50</p>
+            <p class="price-tag">�50</p>
             <p class="helper-text">Get 1 week free</p>
           </article>
           <article id="yearlyPaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 100 pounds with Revolut" onclick="if(window.jobMatchOpenYearlyPayment){return window.jobMatchOpenYearlyPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=10000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
             <h3>Yearly</h3>
-            <p class="price-tag">ï¿½100</p>
+            <p class="price-tag">�100</p>
             <p class="helper-text">Get one month free</p>
           </article>
           <article id="lifetimePaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 200 pounds with Revolut" onclick="if(window.jobMatchOpenLifetimePayment){return window.jobMatchOpenLifetimePayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=20000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
             <h3>Premium Access (Lifetime)</h3>
-            <p class="price-tag">ï¿½200<span> one-off</span></p>
+            <p class="price-tag">�200<span> one-off</span></p>
           </article>
         </div>
         <p class="helper-text">After payment, please allow a few minutes to update plan.</p>
@@ -1435,22 +1487,8 @@
       }
       function renderBalances(session){
         var balances = document.getElementById("accountBalances");
-        var usage = getUsage(session);
-        var daysLeft = trialDaysLeft(usage);
         if(!balances){return;}
-        if(!session || !session.email){
-          balances.innerHTML = "";
-          return;
-        }
-        if(usage.paid){
-          balances.innerHTML = '';
-          return;
-        }
-        if(daysLeft > 0){
-          balances.innerHTML = '<span class="account-balance-pill">Free trial: <strong>' + daysLeft + '</strong> day' + (daysLeft === 1 ? '' : 's') + ' left</span>';
-          return;
-        }
-        balances.innerHTML = '<span class="account-balance-pill premium">Free trial expired. Please upgrade to continue.</span>';
+        balances.innerHTML = "";
       }
       function handleInlineApplyNowClick(event){
         var target = event && event.target;
@@ -3738,7 +3776,7 @@
           var model = String(loadSetting(openAiModelStorageKey, defaultOpenAiModel) || defaultOpenAiModel).replace(/^\s+|\s+$/g, "") || defaultOpenAiModel;
           var response, data;
           if(window.location && String(window.location.protocol || "").toLowerCase() === "file:"){
-            return { ok: false, message: "Open the local app through JobMatchAgent.hta so Rex can use the desktop AI bridge, or use the hosted Netlify site for online Rex chat." };
+            return { ok: false, message: "Open JobMatchAgent.hta so Rex can use the desktop AI bridge, or use the hosted Netlify site for online Rex chat." };
           }
           try {
             response = await fetch("/.netlify/functions/chat-with-rex", {
@@ -4043,7 +4081,7 @@
         if(accountDaysLeftText(session) === "Unlimited"){ clearInlinePremiumPaneNotice(); return true; }
         if(/^(\d+)\s+day/i.test(accountDaysLeftText(session)) && Number((accountDaysLeftText(session).match(/^(\d+)\s+day/i)||[])[1]||0) > 30){ clearInlinePremiumPaneNotice(); return true; }
         if(!silent){
-          showInlinePremiumPaneUpgrade(buttonId === "visaJobsToggleBtn" ? "Pane 4 - Land a Job with Visa Sponsorship" : "Pane 7 - Chat with Rex");
+          showInlinePremiumPaneUpgrade(buttonId === "visaJobsToggleBtn" ? "Pane 4 - Land a Job with Visa Sponsorship" : "Pane 9 - Chat with Rex");
         }
         return false;
       }
@@ -4078,6 +4116,7 @@
           ["cvBuilderPanel", "cvBuilderPanelBody", "cvBuilderToggleBtn", "cvBuilderToggleIcon", "panel cv-builder-panel collapsed-panel open", "panel cv-builder-panel collapsed-panel"],
           ["coverLetterPanel", "coverLetterPanelBody", "coverLetterToggleBtn", "coverLetterToggleIcon", "panel priority-panel collapsed-panel open", "panel priority-panel collapsed-panel"],
           ["sponsorSearchPanel", "sponsorSearchPanelBody", "sponsorSearchToggleBtn", "sponsorSearchToggleIcon", "panel sponsor-search-panel collapsed-panel open", "panel sponsor-search-panel collapsed-panel"],
+          ["cvScorerPanel", "cvScorerPanelBody", "cvScorerToggleBtn", "cvScorerToggleIcon", "panel cv-scorer-panel collapsed-panel open", "panel cv-scorer-panel collapsed-panel"],
           ["careerPathPanel", "careerPathPanelBody", "careerPathToggleBtn", "careerPathToggleIcon", "panel career-path-panel collapsed-panel open", "panel career-path-panel collapsed-panel"],
           ["interviewQuestionsPanel", "interviewQuestionsPanelBody", "interviewQuestionsToggleBtn", "interviewQuestionsToggleIcon", "panel interview-questions-panel collapsed-panel open", "panel interview-questions-panel collapsed-panel"]
         ];
@@ -4184,7 +4223,7 @@
           }
           if(!session || !session.email){
             box.className = "local-access-debug";
-            body.innerHTML = "No signed-in local user detected yet.";
+            body.innerHTML = "No signed-in user detected yet.";
             return;
           }
           if(winningPlan){
@@ -4207,7 +4246,7 @@
           lines.push("Winning start: " + escapeHtml(winningStart || "-"));
           lines.push("Days left: " + escapeHtml(accountDaysLeftText(previewSession) || "-"));
           lines.push("Pane 4 access: " + (pane4Open ? "open" : "locked"));
-          lines.push("Pane 7 access: " + (pane7Open ? "open" : "locked"));
+          lines.push("Pane 9 access: " + (pane7Open ? "open" : "locked"));
           box.className = "local-access-debug " + ((pane4Open && pane7Open) ? "good" : "warn");
           body.innerHTML = lines.join("<br>");
         }catch(error){
@@ -4447,9 +4486,9 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   
     <script src="./ai-session-memory.js?v=20260417aiwhole11"></script>
-<script src="./app.js?v=20260430clsynthesis01"></script>
+<script src="./app.js?v=20260514coverparagraph01"></script>
     <script src="./career-path-library.js?v=20260429career1000b01"></script>
-    <script src="./cv-generator.js?v=20260430cvstatus01"></script>
+    <script src="./cv-generator.js?v=20260514qualityreview01"></script>
     <script>
       (function(){
         function daysState(){
@@ -4464,10 +4503,11 @@
             {button:"coverLetterToggleBtn", body:"coverLetterPanelBody", panel:"coverLetterPanel", icon:"coverLetterToggleIcon", badge:"coverLetterLockBadge", pane:"Pane 2 - Generate Cover Letter", premium:false},
             {button:"sponsorSearchToggleBtn", body:"sponsorSearchPanelBody", panel:"sponsorSearchPanel", icon:"sponsorSearchToggleIcon", badge:"sponsorSearchLockBadge", pane:"Pane 3 - Search for Companies with Skilled Worker Licence", premium:false},
             {button:"visaJobsToggleBtnLocal", body:"visaJobsPanelBody", panel:"visaJobsPanel", icon:"visaJobsToggleIconLocal", badge:"visaJobsLockBadgeLocal", pane:"Pane 4 - Land a Job with Visa Sponsorship", premium:true},
-              {button:"remoteJobsToggleBtn", body:"remoteJobsPanelBody", panel:"remoteJobsPanel", icon:"remoteJobsToggleIcon", badge:"remoteJobsLockBadge", pane:"Pane 5 - Land a Remote Job", premium:true},
-            {button:"careerPathToggleBtn", body:"careerPathPanelBody", panel:"careerPathPanel", icon:"careerPathToggleIcon", badge:"careerPathLockBadge", pane:"Pane 6 - Career Path Planner", premium:false},
-            {button:"interviewQuestionsToggleBtn", body:"interviewQuestionsPanelBody", panel:"interviewQuestionsPanel", icon:"interviewQuestionsToggleIcon", badge:"interviewQuestionsLockBadge", pane:"Pane 7 - Get Possible Interview Questions", premium:false},
-            {button:"rexChatToggleBtnLocal", body:"rexChatPanelBody", panel:"rexChatPanel", icon:"rexChatToggleIconLocal", badge:"rexChatLockBadgeLocal", pane:"Pane 8 - Chat with Rex", premium:true}
+            {button:"remoteJobsToggleBtn", body:"remoteJobsPanelBody", panel:"remoteJobsPanel", icon:"remoteJobsToggleIcon", badge:"remoteJobsLockBadge", pane:"Pane 5 - Land a Remote Job", premium:true},
+            {button:"cvScorerToggleBtn", body:"cvScorerPanelBody", panel:"cvScorerPanel", icon:"cvScorerToggleIcon", badge:"cvScorerLockBadge", pane:"Pane 6 - CV Scorer", premium:false},
+            {button:"careerPathToggleBtn", body:"careerPathPanelBody", panel:"careerPathPanel", icon:"careerPathToggleIcon", badge:"careerPathLockBadge", pane:"Pane 7 - Career Path Planner", premium:false},
+            {button:"interviewQuestionsToggleBtn", body:"interviewQuestionsPanelBody", panel:"interviewQuestionsPanel", icon:"interviewQuestionsToggleIcon", badge:"interviewQuestionsLockBadge", pane:"Pane 8 - Get Possible Interview Questions", premium:false},
+            {button:"rexChatToggleBtnLocal", body:"rexChatPanelBody", panel:"rexChatPanel", icon:"rexChatToggleIconLocal", badge:"rexChatLockBadgeLocal", pane:"Pane 9 - Chat with Rex", premium:true}
           ];
         }
         function byButton(id){ var items=configs(),i; for(i=0;i<items.length;i+=1){ if(items[i].button===id){ return items[i]; } } return null; }
@@ -4650,7 +4690,7 @@
             if(event && event.stopImmediatePropagation){ event.stopImmediatePropagation(); }
             if(!allowed){
               if(typeof showInlinePremiumPaneUpgrade === "function"){
-                showInlinePremiumPaneUpgrade(buttonId === "visaJobsToggleBtnLocal" ? "Pane 4 - Land a Job with Visa Sponsorship" : "Pane 7 - Chat with Rex");
+                showInlinePremiumPaneUpgrade(buttonId === "visaJobsToggleBtnLocal" ? "Pane 4 - Land a Job with Visa Sponsorship" : "Pane 9 - Chat with Rex");
               }
               applyPaneState(button, body, panel, icon, false);
               return false;
@@ -4689,7 +4729,7 @@
           allowed = syncLocalPremiumPaneState(button.id, button.id === "visaJobsToggleBtnLocal" ? "visaJobsLockBadgeLocal" : "rexChatLockBadgeLocal", refs[1]);
           if(!allowed){
             if(typeof showInlinePremiumPaneUpgrade === "function"){
-              showInlinePremiumPaneUpgrade(button.id === "visaJobsToggleBtnLocal" ? "Pane 4 - Land a Job with Visa Sponsorship" : "Pane 7 - Chat with Rex");
+              showInlinePremiumPaneUpgrade(button.id === "visaJobsToggleBtnLocal" ? "Pane 4 - Land a Job with Visa Sponsorship" : "Pane 9 - Chat with Rex");
             }
             applyPaneState(button, body, panel, icon, false);
             return false;
@@ -4813,7 +4853,7 @@
         }
         function refreshStandaloneLocalPremiumPanes(){
           setLocalPremiumPane("visaJobsToggleBtnLocal", "visaJobsLockBadgeLocal", "visaJobsPanel", "visaJobsPanelBody", "visaJobsToggleIconLocal", "Pane 4 - Land a Job with Visa Sponsorship");
-          setLocalPremiumPane("rexChatToggleBtnLocal", "rexChatLockBadgeLocal", "rexChatPanel", "rexChatPanelBody", "rexChatToggleIconLocal", "Pane 7 - Chat with Rex");
+          setLocalPremiumPane("rexChatToggleBtnLocal", "rexChatLockBadgeLocal", "rexChatPanel", "rexChatPanelBody", "rexChatToggleIconLocal", "Pane 9 - Chat with Rex");
         }
         if(document.readyState === "loading"){
           document.addEventListener("DOMContentLoaded", refreshStandaloneLocalPremiumPanes);
@@ -4875,7 +4915,7 @@
           return { locked: true, plan: plan };
         }
         function setPaneLockVisuals(kind){
-          var ids = kind === "rex" ? {button:"rexChatToggleBtnLocal", body:"rexChatPanelBody", panel:"rexChatPanel", icon:"rexChatToggleIconLocal", badge:"rexChatLockBadgeLocal", name:"Pane 7 - Chat with Rex"} : {button:"visaJobsToggleBtnLocal", body:"visaJobsPanelBody", panel:"visaJobsPanel", icon:"visaJobsToggleIconLocal", badge:"visaJobsLockBadgeLocal", name:"Pane 4 - Land a Job with Visa Sponsorship"};
+          var ids = kind === "rex" ? {button:"rexChatToggleBtnLocal", body:"rexChatPanelBody", panel:"rexChatPanel", icon:"rexChatToggleIconLocal", badge:"rexChatLockBadgeLocal", name:"Pane 9 - Chat with Rex"} : {button:"visaJobsToggleBtnLocal", body:"visaJobsPanelBody", panel:"visaJobsPanel", icon:"visaJobsToggleIconLocal", badge:"visaJobsLockBadgeLocal", name:"Pane 4 - Land a Job with Visa Sponsorship"};
           var button = document.getElementById(ids.button);
           var body = document.getElementById(ids.body);
           var panel = document.getElementById(ids.panel);

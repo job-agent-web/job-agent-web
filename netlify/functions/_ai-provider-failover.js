@@ -41,6 +41,50 @@ async function generateWithFailover(options) {
   };
 }
 
+function getProviderTimeoutMs(options) {
+  const configured = Number(options && options.providerTimeoutMs || process.env.AI_PROVIDER_TIMEOUT_MS || 8500);
+  if (!isFinite(configured) || configured <= 0) {
+    return 8500;
+  }
+  return Math.max(2500, Math.min(configured, 12000));
+}
+
+async function fetchWithTimeout(url, init, timeoutMs) {
+  const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+  let timer = null;
+  if (controller) {
+    init = Object.assign({}, init || {}, { signal: controller.signal });
+    timer = setTimeout(function () {
+      try {
+        controller.abort();
+      } catch (error) {}
+    }, timeoutMs);
+  }
+  try {
+    return await fetch(url, init);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
+}
+
+function sleep(ms) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, ms);
+  });
+}
+
+function getGeminiRetryDelayMs(message) {
+  const text = String(message || "");
+  const match = text.match(/retry in\s+([0-9.]+)s/i);
+  const seconds = match ? Number(match[1]) : 0;
+  if (!isFinite(seconds) || seconds <= 0 || seconds > 20) {
+    return 0;
+  }
+  return Math.ceil(seconds * 1000) + 350;
+}
+
 function buildAttemptOrder(options) {
   const explicitOrder = options && options.providerOrder && options.providerOrder.length
     ? options.providerOrder
@@ -84,36 +128,30 @@ async function callProvider(provider, options) {
 
 async function callGemini(options) {
   const apiKey = getEnvValue(["GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GEMINI_API_KEY", "GEMINI_KEY"]);
-  const model = normalizeModel(options.model || process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL, DEFAULT_GEMINI_MODEL);
+  const model = normalizeModel(process.env.GEMINI_MODEL || options.model || DEFAULT_GEMINI_MODEL, DEFAULT_GEMINI_MODEL);
   let response;
   let rawText;
   let parsed;
+  let retryDelayMs;
   let text;
 
   if (!apiKey) {
     return { ok: false, message: "GEMINI_API_KEY is not configured." };
   }
 
-  response = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/" +
-      encodeURIComponent(model) +
-      ":generateContent?key=" +
-      encodeURIComponent(apiKey),
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: String(options.systemInstruction || "") }]
-        },
-        contents: options.contents || [],
-        generationConfig: buildGeminiConfig(options)
-      })
-    }
-  );
-
+  response = await sendGeminiRequest(model, apiKey, options);
   rawText = await response.text();
   parsed = safeJson(rawText);
+
+  if (!response.ok) {
+    retryDelayMs = getGeminiRetryDelayMs(parsed && parsed.error && parsed.error.message);
+    if (retryDelayMs > 0) {
+      await sleep(retryDelayMs);
+      response = await sendGeminiRequest(model, apiKey, options);
+      rawText = await response.text();
+      parsed = safeJson(rawText);
+    }
+  }
 
   if (!response.ok) {
     return {
@@ -133,10 +171,31 @@ async function callGemini(options) {
   return { ok: true, model: model, text: text.trim() };
 }
 
+async function sendGeminiRequest(model, apiKey, options) {
+  return fetchWithTimeout(
+    "https://generativelanguage.googleapis.com/v1beta/models/" +
+      encodeURIComponent(model) +
+      ":generateContent?key=" +
+      encodeURIComponent(apiKey),
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: String(options.systemInstruction || "") }]
+        },
+        contents: options.contents || [],
+        generationConfig: buildGeminiConfig(options)
+      })
+    },
+    getProviderTimeoutMs(options)
+  );
+}
+
 async function callCloudflare(options) {
-  const accountId = String(process.env.CF_ACCOUNT_ID || "").trim();
-  const token = String(process.env.CF_API_TOKEN || "").trim();
-  const model = String(process.env.CF_WORKERS_AI_MODEL || DEFAULT_CF_MODEL).trim();
+  const accountId = getCloudflareAccountId();
+  const token = getCloudflareApiToken();
+  const model = normalizeCloudflareModel(process.env.CF_WORKERS_AI_MODEL || DEFAULT_CF_MODEL);
   let response;
   let parsed;
   let text;
@@ -145,7 +204,7 @@ async function callCloudflare(options) {
     return { ok: false, message: "Cloudflare Workers AI is not configured." };
   }
 
-  response = await fetch(
+  response = await fetchWithTimeout(
     "https://api.cloudflare.com/client/v4/accounts/" +
       encodeURIComponent(accountId) +
       "/ai/run/" +
@@ -161,7 +220,8 @@ async function callCloudflare(options) {
         max_tokens: options.maxOutputTokens || 1200,
         temperature: typeof options.temperature === "number" ? options.temperature : 0.7
       })
-    }
+    },
+    getProviderTimeoutMs(options)
   );
 
   parsed = safeJson(await response.text());
@@ -190,6 +250,7 @@ async function callHuggingFace(options) {
   const token = getHuggingFaceToken();
   const model = String(process.env.HF_CHAT_MODEL || DEFAULT_HF_MODEL).trim();
   let response;
+  let rawText;
   let parsed;
   let text;
   const body = {
@@ -203,25 +264,22 @@ async function callHuggingFace(options) {
     return { ok: false, message: "Hugging Face is not configured." };
   }
 
-  response = await fetch("https://router.huggingface.co/v1/chat/completions", {
+  response = await fetchWithTimeout("https://router.huggingface.co/v1/chat/completions", {
     method: "POST",
     headers: {
       "content-type": "application/json",
       authorization: "Bearer " + token
     },
     body: JSON.stringify(body)
-  });
+  }, getProviderTimeoutMs(options));
 
-  parsed = safeJson(await response.text());
+  rawText = await response.text();
+  parsed = safeJson(rawText);
 
   if (!response.ok) {
     return {
       ok: false,
-      message: parsed && parsed.error && parsed.error.message
-        ? parsed.error.message
-        : parsed && parsed.message
-          ? parsed.message
-          : "Hugging Face request failed."
+      message: extractProviderErrorMessage(parsed, rawText, "Hugging Face request failed.", response.status)
     };
   }
 
@@ -240,6 +298,7 @@ async function callGptOss(options) {
   const token = getHuggingFaceToken();
   const model = String(process.env.GPT_OSS_MODEL || DEFAULT_GPT_OSS_MODEL).trim();
   let response;
+  let rawText;
   let parsed;
   let text;
   const body = {
@@ -253,25 +312,22 @@ async function callGptOss(options) {
     return { ok: false, message: "GPT-OSS fallback is not configured. Add HF_TOKEN for router access." };
   }
 
-  response = await fetch("https://router.huggingface.co/v1/chat/completions", {
+  response = await fetchWithTimeout("https://router.huggingface.co/v1/chat/completions", {
     method: "POST",
     headers: {
       "content-type": "application/json",
       authorization: "Bearer " + token
     },
     body: JSON.stringify(body)
-  });
+  }, getProviderTimeoutMs(options));
 
-  parsed = safeJson(await response.text());
+  rawText = await response.text();
+  parsed = safeJson(rawText);
 
   if (!response.ok) {
     return {
       ok: false,
-      message: parsed && parsed.error && parsed.error.message
-        ? parsed.error.message
-        : parsed && parsed.message
-          ? parsed.message
-          : "GPT-OSS fallback request failed."
+      message: extractProviderErrorMessage(parsed, rawText, "GPT-OSS fallback request failed.", response.status)
     };
   }
 
@@ -381,6 +437,26 @@ function extractHuggingFaceText(parsed) {
   return "";
 }
 
+function extractProviderErrorMessage(parsed, rawText, fallback, statusCode) {
+  let message = "";
+  if (parsed && parsed.error && typeof parsed.error.message === "string") {
+    message = parsed.error.message;
+  } else if (parsed && typeof parsed.error === "string") {
+    message = parsed.error;
+  } else if (parsed && typeof parsed.message === "string") {
+    message = parsed.message;
+  } else if (typeof rawText === "string" && rawText.trim()) {
+    message = rawText.trim().slice(0, 240);
+  }
+  if (!message) {
+    message = fallback || "Provider request failed.";
+  }
+  if (statusCode) {
+    message = "HTTP " + statusCode + ": " + message;
+  }
+  return message;
+}
+
 function shouldRetry(message) {
   const text = String(message || "").toLowerCase();
   return text.indexOf("quota") !== -1 ||
@@ -403,7 +479,7 @@ function getEnvValue(names) {
   let value;
   for (i = 0; i < names.length; i += 1) {
     value = String(process.env[names[i]] || "").trim();
-    if (value) {
+    if (value && !isPlaceholderValue(value)) {
       return value;
     }
   }
@@ -449,8 +525,8 @@ function getProviderStatus() {
       model: String(process.env.GPT_OSS_MODEL || DEFAULT_GPT_OSS_MODEL).trim()
     },
     cloudflare: {
-      configured: !!(String(process.env.CF_ACCOUNT_ID || "").trim() && String(process.env.CF_API_TOKEN || "").trim()),
-      model: String(process.env.CF_WORKERS_AI_MODEL || DEFAULT_CF_MODEL).trim()
+      configured: !!(getCloudflareAccountId() && getCloudflareApiToken()),
+      model: normalizeCloudflareModel(process.env.CF_WORKERS_AI_MODEL || DEFAULT_CF_MODEL)
     },
     huggingface: {
       configured: !!getHuggingFaceToken(),
@@ -460,11 +536,55 @@ function getProviderStatus() {
 }
 
 function normalizeModel(input, fallback) {
-  const raw = String(input || "").trim();
-  if (!raw || /^gpt-/i.test(raw)) {
-    return fallback;
+  const raw = String(input || "").trim().replace(/^models\//i, "");
+  const safeFallback = isValidGeminiModel(fallback) ? String(fallback).trim().replace(/^models\//i, "") : DEFAULT_GEMINI_MODEL;
+  if (!raw || !isValidGeminiModel(raw)) {
+    return safeFallback;
   }
   return raw;
+}
+
+function isValidGeminiModel(input) {
+  const raw = String(input || "").trim().replace(/^models\//i, "");
+  return /^gemini-[a-z0-9][a-z0-9.-]*$/i.test(raw);
+}
+
+function normalizeCloudflareModel(input) {
+  const raw = String(input || "").trim();
+  if (!raw || isPlaceholderValue(raw) || raw.indexOf("=") !== -1) {
+    return DEFAULT_CF_MODEL;
+  }
+  if (/^llama-/i.test(raw)) {
+    return "@cf/meta/" + raw;
+  }
+  return raw;
+}
+
+function getCloudflareAccountId() {
+  const raw = String(process.env.CF_ACCOUNT_ID || "").trim();
+  if (!raw || isPlaceholderValue(raw) || raw.indexOf("=") !== -1 || !/^[a-f0-9]{32}$/i.test(raw)) {
+    return "";
+  }
+  return raw;
+}
+
+function getCloudflareApiToken() {
+  const raw = String(process.env.CF_API_TOKEN || "").trim();
+  if (!raw || isPlaceholderValue(raw) || raw.indexOf("CF_ACCOUNT_ID=") !== -1) {
+    return "";
+  }
+  return raw;
+}
+
+function isPlaceholderValue(input) {
+  const text = String(input || "").trim().toLowerCase();
+  return !text ||
+    text.indexOf("your-") !== -1 ||
+    text.indexOf("replace-me") !== -1 ||
+    text.indexOf("placeholder") !== -1 ||
+    text.indexOf("example") !== -1 ||
+    text === "changeme" ||
+    text === "todo";
 }
 
 function safeJson(text) {
