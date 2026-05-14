@@ -111,13 +111,20 @@ function buildSystemInstruction() {
     "Return 10 to 12 unique core skills.",
     "For each role return exactly 4 strong duties.",
     "Each duty must be written for the exact role title the user entered in candidate.roles[i].title, not for a generic role.",
+    "Do not start duties with phrases such as 'As Data Analyst', 'As Teacher', or 'In my role as'. Start with a strong action verb instead.",
     "Use the pasted job description to decide which responsibilities, skills, tools, stakeholders, and outcomes each entered role should emphasise.",
     "Do not copy sentences, bullet points, or distinctive phrases from the pasted job description.",
     "Rewrite every responsibility in fresh, professional CV language, blending the user's entered role title with the meaning of the advert rather than reusing the advert wording.",
+    "For Data Analyst roles, duties should naturally cover analysis, data quality, reporting, dashboards, insight, stakeholders, SQL/Excel/Power BI where supported, and decision support.",
+    "For Admin, Executive Assistant, Coordinator or Business Support roles, duties should naturally cover records, correspondence, scheduling, meetings, trackers, documentation, confidentiality, and service standards.",
+    "For Healthcare roles, duties should naturally cover safe service delivery, accurate records, confidentiality, multidisciplinary communication, escalation, safeguarding, and quality standards where supported.",
+    "For Support Worker roles, duties should naturally cover person-centred support, communication, safeguarding awareness, documentation, empathy, escalation, and dependable follow-through where supported.",
     "Do not mention the target employer, hiring company, organisation, or brand name from the job description anywhere in the CV.",
     "Previous employers must come only from candidate.roles[i].employer; never infer or insert the target company as a previous employer.",
     "Connect every duty to both: the user's entered role title and the target job description requirements.",
-    "Do not write broad duties that could fit any job; include concrete role-specific actions, outputs, stakeholders, systems, records, analysis, service delivery, or governance where supported by the job description and role notes.",
+    "Do not write broad duties that could fit any job; every duty should show action, output, stakeholder value, quality control, or service impact.",
+    "Remove weak filler such as 'responsible for various tasks', 'worked well with others', 'helped with duties', 'supported daily operations', or 'performed role-related tasks'.",
+    "Use polished recruiter-ready language that sounds like real professional experience, not a pasted job advert.",
     "Role duties must be unique and must not repeat each other.",
     "Use only the supplied candidate data and job description. Do not invent employers, dates, or qualifications.",
     "If previous CV outputs are provided, do not recycle their phrasing, ordering, or duty wording.",
@@ -259,18 +266,81 @@ function enforceRoleDutyTitle(duties, roleTitle) {
   }).filter(Boolean);
 }
 
+function inferServerRoleFamily(roleTitle, jobDescription, role) {
+  const text = String((roleTitle || "") + " " + (jobDescription || "") + " " + ((role && role.notes) || "")).toLowerCase();
+  if (/support worker|service user|supported living|safeguarding|care support|personal care|community support/.test(text)) {
+    return "support";
+  }
+  if (/data|analyst|analysis|dashboard|power\s*bi|sql|excel|kpi|reporting|insight|tableau|business intelligence/.test(text)) {
+    return "data";
+  }
+  if (/administrator|administrative|admin assistant|executive assistant|coordinator|office|diary|minutes|records|microsoft 365|inbox|correspondence/.test(text)) {
+    return "admin";
+  }
+  if (/nhs|healthcare|patient|clinical|hospital|medical|care|public health/.test(text)) {
+    return "healthcare";
+  }
+  if (/project|programme|program|delivery|implementation|pmo|risk|milestone|business case/.test(text)) {
+    return "delivery";
+  }
+  return "general";
+}
+
+function fillServerFallbackDuty(template, focus, evidence) {
+  return template
+    .replace(/\{focus\}/g, lowerFirst(focus || "role priorities"))
+    .replace(/\{evidence\}/g, lowerFirst(evidence || "practical role experience"))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function buildServerFallbackDuties(roleTitle, jobDescription, role) {
   const requirements = extractRequirementLines(jobDescription).map(rewriteRequirementAsCvFocus);
   const evidence = String((role && role.notes) || "practical role experience").split(/[.;\n]/).map(function (line) { return line.trim(); }).filter(Boolean)[0] || "practical role experience";
   const focus = requirements.length ? requirements : ["accurate delivery of role priorities", "clear stakeholder communication", "organised documentation and follow-up", "quality-focused service delivery"];
-  return [
-    "Delivered practical improvements across " + lowerFirst(focus[0]) + " using " + lowerFirst(evidence) + ", keeping outputs accurate, organised, and useful for decision-making.",
-    "Coordinated actions, records, and communication around " + lowerFirst(focus[1] || focus[0]) + ", ensuring priorities were progressed professionally and followed through.",
-    "Converted workplace priorities into clear activity across " + lowerFirst(focus[2] || focus[0]) + ", improving consistency, quality, and stakeholder confidence.",
-    "Supported colleagues and stakeholders with " + lowerFirst(focus[3] || focus[0]) + ", maintaining dependable standards and practical outcomes."
-  ];
+  const family = inferServerRoleFamily(roleTitle, jobDescription, role);
+  const templates = {
+    data: [
+      "Analysed information linked to {focus}, converting raw detail into clear findings that supported decisions and highlighted priority actions.",
+      "Built or maintained reporting outputs around {focus}, improving visibility of trends, data quality, performance risks, and stakeholder priorities.",
+      "Validated source information and reconciled inconsistencies across {focus}, strengthening confidence in recurring reports and analytical outputs.",
+      "Translated stakeholder questions into practical analysis, summaries, and recommendations, drawing on {evidence} to make insight useful and accessible."
+    ],
+    admin: [
+      "Managed records, correspondence, and documentation linked to {focus}, maintaining accuracy, confidentiality, and timely follow-up.",
+      "Coordinated meetings, schedules, trackers, and administrative actions so that priorities remained organised, visible, and progressed to completion.",
+      "Prepared clear updates and written communication around {focus}, helping colleagues understand actions, deadlines, and service requirements.",
+      "Improved administrative consistency by monitoring outstanding tasks, resolving issues early, and keeping information reliable across {focus}."
+    ],
+    healthcare: [
+      "Maintained accurate service information and records linked to {focus}, supporting confidentiality, continuity, and safe decision-making.",
+      "Communicated with colleagues, service users, or stakeholders in a calm and professional manner, escalating concerns appropriately and following agreed procedures.",
+      "Supported quality-focused delivery across {focus}, combining empathy, attention to detail, and reliable follow-through in a busy service environment.",
+      "Contributed to safer outcomes by keeping documentation complete, responding to changing priorities, and applying professional judgement to {focus}."
+    ],
+    support: [
+      "Provided person-centred support by listening carefully, identifying needs, and following through on actions connected to {focus}.",
+      "Maintained accurate notes, updates, and communication so service users, customers, or stakeholders received consistent support.",
+      "Handled sensitive or challenging situations with patience, empathy, sound judgement, and awareness of safeguarding or service standards.",
+      "Built trust through dependable communication, timely escalation, and careful coordination of next steps across {focus}."
+    ],
+    delivery: [
+      "Coordinated plans, milestones, risks, and actions linked to {focus}, keeping delivery priorities visible, controlled, and on schedule.",
+      "Worked across stakeholders to clarify requirements, remove blockers, and convert plans into practical, trackable outputs.",
+      "Maintained delivery documentation and progress updates that improved accountability, decision-making, and confidence across {focus}.",
+      "Improved consistency by refining workflows, tracking dependencies, and keeping teams aligned around agreed outcomes."
+    ],
+    general: [
+      "Delivered accurate, organised work around {focus}, clarifying requirements and following through to a reliable professional standard.",
+      "Used clear communication and sound judgement to support stakeholders, resolve issues, and maintain confidence in the quality of outputs.",
+      "Improved workflow by keeping records complete, monitoring actions, and identifying practical opportunities to reduce errors or delays.",
+      "Balanced competing priorities while maintaining professionalism, attention to detail, and consistent service standards."
+    ]
+  };
+  return (templates[family] || templates.general).map(function (template, index) {
+    return fillServerFallbackDuty(template, focus[index] || focus[0], evidence);
+  }).slice(0, 4);
 }
-
 function sanitizeDutyAgainstJobDescription(duty, jobDescription, roleTitle, index) {
   const text = String(duty || "").trim().replace(/^[-*•]\s*/, "");
   if (!text) {
