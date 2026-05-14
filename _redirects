@@ -6,3 +6,6 @@
 /diagnostics    /diagnostics.html   200
 /diagnostics/   /diagnostics.html   200
 /index          /index.html         200
+/admin-local.html /admin.html 200
+/admin-local      /admin.html 200
+/admin-local/     /admin.html 200

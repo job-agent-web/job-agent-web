@@ -5,7 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Job Match Agent Admin</title>
-  <link rel="stylesheet" href="../styles.css?v=20260427adminpasskey01">
+<link rel="stylesheet" href="./styles.css?v=20260514darkpanes01">
 </head>
 <body class="auth-page admin-page">
   <div class="page-shell auth-page-shell">
@@ -91,46 +91,52 @@
           <div class="section-title">
             <h2>Admin Cover Letter Logic</h2>
             <div class="letter-controls">
-              <button id="previewAdminGeneratorConfigBtn" class="ghost-button" type="button">Preview Generated Letter</button>
               <button id="saveAdminGeneratorConfigBtn" class="primary-button" type="button">Save Logic</button>
-              <button id="restoreAdminGeneratorConfigBtn" class="ghost-button" type="button">Restore Last Saved Logic</button>
               <button id="resetAdminGeneratorConfigBtn" class="ghost-button" type="button">Reset Logic</button>
             </div>
           </div>
           <p class="helper-text auth-copy">
-            Change the reusable cover letter generator logic here. These rules affect future generated drafts across the hosted app.
+            Paste up to three high-quality cover letter samples here. New cover letters across the hosted app will draw insight from them for tone, structure, paragraph flow, and overall standard without copying them directly.
           </p>
-          <div class="manual-grid">
-            <label>
-              Opening focus
-              <textarea id="adminGeneratorIntroTemplate" rows="5" placeholder="Set the opening logic and emphasis for generated cover letters."></textarea>
-            </label>
-            <label>
-              Strength themes
-              <textarea id="adminGeneratorStrengthTemplate" rows="5" placeholder="Set the repeated strengths and role themes to emphasise."></textarea>
-            </label>
-            <label>
-              NHS tone rule
-              <textarea id="adminGeneratorNhsTemplate" rows="5" placeholder="Set the NHS-specific tone and service emphasis."></textarea>
-            </label>
-            <label>
-              Civil Service tone rule
-              <textarea id="adminGeneratorCivilTemplate" rows="5" placeholder="Set the Civil Service-specific tone and behaviours emphasis."></textarea>
-            </label>
-            <label>
-              Closing logic
-              <textarea id="adminGeneratorClosingTemplate" rows="5" placeholder="Set the closing message and call to action."></textarea>
-            </label>
+          <div class="admin-generator-samples">
+            <section class="admin-generator-sample collapsed-panel">
+              <button id="adminGeneratorSample1ToggleBtn" class="section-toggle" type="button" aria-expanded="false">
+                <span>CL1</span>
+                <span id="adminGeneratorSample1ToggleIcon">+</span>
+              </button>
+              <div id="adminGeneratorSample1Body" hidden>
+                <label>
+                  Cover letter sample 1
+                  <textarea id="adminGeneratorSample1" rows="12" placeholder="Paste cover letter sample 1 here."></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin-generator-sample collapsed-panel">
+              <button id="adminGeneratorSample2ToggleBtn" class="section-toggle" type="button" aria-expanded="false">
+                <span>CL2</span>
+                <span id="adminGeneratorSample2ToggleIcon">+</span>
+              </button>
+              <div id="adminGeneratorSample2Body" hidden>
+                <label>
+                  Cover letter sample 2
+                  <textarea id="adminGeneratorSample2" rows="12" placeholder="Paste cover letter sample 2 here."></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin-generator-sample collapsed-panel">
+              <button id="adminGeneratorSample3ToggleBtn" class="section-toggle" type="button" aria-expanded="false">
+                <span>CL3</span>
+                <span id="adminGeneratorSample3ToggleIcon">+</span>
+              </button>
+              <div id="adminGeneratorSample3Body" hidden>
+                <label>
+                  Cover letter sample 3
+                  <textarea id="adminGeneratorSample3" rows="12" placeholder="Paste cover letter sample 3 here."></textarea>
+                </label>
+              </div>
+            </section>
           </div>
-          <div class="admin-generator-preview">
-            <div class="section-title">
-              <h3>Preview</h3>
-            </div>
-            <div id="adminGeneratorPreview" class="generator-preview-box">
-              Preview a generated letter here before saving logic changes.
-            </div>
-          </div>
-          <div id="adminGeneratorConfigStatus" class="auth-status neutral">Save logic here to shape future generated cover letters on the hosted app.</div>
+          <div id="adminGeneratorConfigStatus" class="auth-status neutral">Save up to three cover letter samples here to guide future generated cover letters on the hosted app.</div>
         </div>
       </article>
 
@@ -170,6 +176,10 @@
     </section>
   </div>
 
-  <script src="../admin.js?v=20260427adminpasskey01"></script>
+<script src="./admin.js?v=20260514feedback01"></script>
 </body>
 </html>
+
+
+
+

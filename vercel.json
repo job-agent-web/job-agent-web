@@ -1,0 +1,131 @@
+{
+    "version":  2,
+    "rewrites":  [
+                     {
+                         "source":  "/.netlify/functions/admin-manage-user",
+                         "destination":  "/api/admin-manage-user"
+                     },
+                     {
+                         "source":  "/.netlify/functions/admin-users",
+                         "destination":  "/api/admin-users"
+                     },
+                     {
+                         "source":  "/.netlify/functions/ai-health",
+                         "destination":  "/api/ai-health"
+                     },
+                     {
+                         "source":  "/.netlify/functions/ai-smoke-test",
+                         "destination":  "/api/ai-smoke-test"
+                     },
+                     {
+                         "source":  "/.netlify/functions/career-path-planner",
+                         "destination":  "/api/career-path-planner"
+                     },
+                     {
+                         "source":  "/.netlify/functions/chat-with-rex",
+                         "destination":  "/api/chat-with-rex"
+                     },
+                     {
+                         "source":  "/.netlify/functions/claim-weekly-day",
+                         "destination":  "/api/claim-weekly-day"
+                     },
+                     {
+                         "source":  "/.netlify/functions/company-website",
+                         "destination":  "/api/company-website"
+                     },
+                     {
+                         "source":  "/.netlify/functions/current-user-plan",
+                         "destination":  "/api/current-user-plan"
+                     },
+                     {
+                         "source":  "/.netlify/functions/find-sponsored-jobs",
+                         "destination":  "/api/find-sponsored-jobs"
+                     },
+                     {
+                         "source":  "/.netlify/functions/generate-cover-letter",
+                         "destination":  "/api/generate-cover-letter"
+                     },
+                     {
+                         "source":  "/.netlify/functions/generate-cv",
+                         "destination":  "/api/generate-cv"
+                     },
+                     {
+                         "source":  "/.netlify/functions/generate-interview-questions",
+                         "destination":  "/api/generate-interview-questions"
+                     },
+                     {
+                         "source":  "/.netlify/functions/nhs-values",
+                         "destination":  "/api/nhs-values"
+                     },
+                     {
+                         "source":  "/.netlify/functions/record-usage",
+                         "destination":  "/api/record-usage"
+                     },
+                     {
+                         "source":  "/.netlify/functions/resolve-signin-identifier",
+                         "destination":  "/api/resolve-signin-identifier"
+                     },
+                     {
+                         "source":  "/.netlify/functions/run-scraper",
+                         "destination":  "/api/run-scraper"
+                     },
+                     {
+                         "source":  "/.netlify/functions/score-cv",
+                         "destination":  "/api/score-cv"
+                     },
+                     {
+                         "source":  "/.netlify/functions/search-results-insights",
+                         "destination":  "/api/search-results-insights"
+                     },
+                     {
+                         "source":  "/.netlify/functions/send-signup-otp",
+                         "destination":  "/api/send-signup-otp"
+                     },
+                     {
+                         "source":  "/.netlify/functions/track-ai-usage",
+                         "destination":  "/api/track-ai-usage"
+                     },
+                     {
+                         "source":  "/.netlify/functions/verify-signup-otp",
+                         "destination":  "/api/verify-signup-otp"
+                     },
+                     {
+                         "source":  "/admin",
+                         "destination":  "/admin.html"
+                     },
+                     {
+                         "source":  "/admin/",
+                         "destination":  "/admin.html"
+                     },
+                     {
+                         "source":  "/admin-local.html",
+                         "destination":  "/admin.html"
+                     },
+                     {
+                         "source":  "/admin-local",
+                         "destination":  "/admin.html"
+                     },
+                     {
+                         "source":  "/admin-local/",
+                         "destination":  "/admin.html"
+                     },
+                     {
+                         "source":  "/app",
+                         "destination":  "/app.html"
+                     },
+                     {
+                         "source":  "/app/",
+                         "destination":  "/app.html"
+                     },
+                     {
+                         "source":  "/index",
+                         "destination":  "/index.html"
+                     }
+                 ],
+    "functions":  {
+                      "api/[name].js":  {
+                                            "maxDuration":  30,
+                                            "includeFiles":  "netlify/functions/**"
+                                        }
+                  }
+}
