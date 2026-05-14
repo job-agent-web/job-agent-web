@@ -3485,7 +3485,7 @@
           }
           html += '<article class="result-card cover-letter-result-card">';
           html += '<div class="result-topline"><div><p class="match-badge">Cover Letter Ready</p><h3 class="job-title">' + escapeHtml(data.title) + '</h3><p class="job-meta">' + escapeHtml(data.company) + ' | Using ' + escapeHtml(data.source.label) + '</p></div><div class="fit-score">' + wordCount + ' words</div></div>';
-          html += '<div class="chip-row"><span class="chip good">Professional cover letter</span><span class="chip good">' + escapeHtml(data.source.label) + '</span><span class="chip warn">Reliable fallback</span></div>';
+          html += '<div class="chip-row"><span class="chip good">Professional cover letter</span><span class="chip good">' + escapeHtml(data.source.label) + '</span></div>';
           html += '<div class="draft-panel"><div class="draft-header"><h4>Cover Letter Preview</h4><div class="letter-controls"><button id="fallbackDownloadCoverLetterBtn" class="primary-button" type="button">Download Word</button></div></div>';
           html += '<p class="job-meta">This cover letter was built directly from your selected CV source and the pasted job description.</p>';
           html += '<div class="letter-preview-panel"><label class="admin-letter-label" for="fallbackLetterPreview">Cover letter preview</label><textarea id="fallbackLetterPreview" class="letter-preview-textarea" readonly>' + escapeHtml(letter) + '</textarea></div></div></article>';
@@ -4486,7 +4486,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   
     <script src="./ai-session-memory.js?v=20260417aiwhole11"></script>
-<script src="./app.js?v=20260514fallbackquality01"></script>
+<script src="./app.js?v=20260514hideprovidererrors01"></script>
     <script src="./career-path-library.js?v=20260429career1000b01"></script>
     <script src="./cv-generator.js?v=20260514fallbackquality01"></script>
     <script>
