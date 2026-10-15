@@ -13,7 +13,7 @@ final class Admin {
     private final String secret;
     Admin(Accounts accounts, Map<String, String> env) {
         this.accounts = accounts;
-        secret = env.getOrDefault("ADMIN_DASHBOARD_SECRET", "");
+        secret = env.getOrDefault("ADMIN_DASHBOARD_SECRET", "").strip();
     }
     void authorize(String supplied) {
         if (secret.isEmpty()) throw new ApiException(503, "Admin access has not been configured.");
