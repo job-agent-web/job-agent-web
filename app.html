@@ -679,7 +679,7 @@
   </script>
   <link rel="stylesheet" href="./premium.css?v=20261015premium01">
   <link rel="stylesheet" href="./studio.css?v=20261015studio01">
-  <script src="./studio.js?v=20261015studio01" defer></script>
+  <script src="./studio.js?v=20261015audit01" defer></script>
 </head>
 <body class="studio-app">
   <header class="premium-topbar"><a class="premium-brand" href="./index.html" aria-label="Job Match Agent home"><span class="premium-monogram" aria-hidden="true">JM</span><span><strong>Job Match Agent</strong><small>YOUR CAREER WORKSPACE</small></span></a><nav aria-label="Main navigation"><a href="#workspaceTools">Career tools</a><a href="#heroSearch" class="premium-nav-action">Find opportunities</a></nav></header>
@@ -842,7 +842,7 @@
           </div>
           <textarea id="candidateProfile1" class="hidden-profile" rows="14"></textarea>
           <input id="activeCv2" name="activeCv" type="radio" hidden>
-          <input id="profileUpload2" class="file-picker-input" type="file" accept=".docx,.pdf,application/pdf">
+          <input id="profileUpload2" class="file-picker-input" type="file" accept=".docx,.pdf,application/pdf" hidden>
           <button id="uploadCvBtn2" type="button" hidden></button>
           <button id="pasteCvToggle2" type="button" hidden></button>
           <div id="pasteCvPane1" class="paste-cv-pane" hidden></div>
@@ -1204,7 +1204,7 @@
             <button id="rexChatUploadLabel" class="rex-upload-label" type="button" title="Attach a file" aria-label="Attach a file for Rex" onclick="var i=document.getElementById('rexChatFileInput');if(i){i.click();}return false;">
               <span>+</span>
             </button>
-            <input id="rexChatFileInput" class="file-picker-input rex-file-picker-input" type="file" accept=".txt,.doc,.docx,.pdf,.rtf,.png,.jpg,.jpeg,.webp,.gif,.bmp,image/*" onchange="if(window.handleRexChatFileSelection){window.handleRexChatFileSelection(this.files&&this.files[0],this);}else if(window.rexFallbackAttach){window.rexFallbackAttach(this.files&&this.files[0]);}">
+            <input id="rexChatFileInput" class="file-picker-input rex-file-picker-input" type="file" hidden accept=".txt,.doc,.docx,.pdf,.rtf,.png,.jpg,.jpeg,.webp,.gif,.bmp,image/*" onchange="if(window.handleRexChatFileSelection){window.handleRexChatFileSelection(this.files&&this.files[0],this);}else if(window.rexFallbackAttach){window.rexFallbackAttach(this.files&&this.files[0]);}">
             <label class="rex-chat-input-wrap">
               <textarea id="rexChatInput" rows="2" placeholder="Ask Rex to coach you for interviews, strengthen answers, or practise likely questions." onkeydown="if((event.key==='Enter'||event.keyCode===13)&&!event.shiftKey){event.preventDefault();if(window.jobMatchDispatchRexSend){window.jobMatchDispatchRexSend();}else{var b=document.getElementById('sendRexChatBtn');if(b){b.click();}}return false;}return true;"></textarea>
             </label>
@@ -1222,21 +1222,21 @@
         <h3 id="limitModalTitle">Free limit reached</h3>
         <p id="limitModalText" class="helper-text">You have used all free access for this feature.</p>
         <div class="pricing-grid">
-          <article id="monthlyPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 10 pounds with Revolut" onclick="if(window.jobMatchOpenMonthlyPayment){return window.jobMatchOpenMonthlyPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=1000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
+          <article id="monthlyPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 10 pounds with Revolut" onclick="if(window.jobMatchOpenMonthlyPayment){return window.jobMatchOpenMonthlyPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=1000&note=Job%20Match%20Agent%3A%20enter%20your%20username%20and%20email','_blank','noopener');return false;">
             <h3>Monthly</h3>
             <p class="price-tag">&pound;10</p>
           </article>
-          <article id="sixMonthPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 50 pounds with Revolut" onclick="if(window.jobMatchOpenSixMonthPayment){return window.jobMatchOpenSixMonthPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=5000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
+          <article id="sixMonthPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 50 pounds with Revolut" onclick="if(window.jobMatchOpenSixMonthPayment){return window.jobMatchOpenSixMonthPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=5000&note=Job%20Match%20Agent%3A%20enter%20your%20username%20and%20email','_blank','noopener');return false;">
             <h3>6 Months</h3>
             <p class="price-tag">&pound;50</p>
             <p class="helper-text">Get 1 week free</p>
           </article>
-          <article id="yearlyPaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 100 pounds with Revolut" onclick="if(window.jobMatchOpenYearlyPayment){return window.jobMatchOpenYearlyPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=10000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
+          <article id="yearlyPaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 100 pounds with Revolut" onclick="if(window.jobMatchOpenYearlyPayment){return window.jobMatchOpenYearlyPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=10000&note=Job%20Match%20Agent%3A%20enter%20your%20username%20and%20email','_blank','noopener');return false;">
             <h3>Yearly</h3>
             <p class="price-tag">&pound;100</p>
             <p class="helper-text">Get one month free</p>
           </article>
-          <article id="lifetimePaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 200 pounds with Revolut" onclick="if(window.jobMatchOpenLifetimePayment){return window.jobMatchOpenLifetimePayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=20000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
+          <article id="lifetimePaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 200 pounds with Revolut" onclick="if(window.jobMatchOpenLifetimePayment){return window.jobMatchOpenLifetimePayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=20000&note=Job%20Match%20Agent%3A%20enter%20your%20username%20and%20email','_blank','noopener');return false;">
             <h3>Premium Access (Lifetime)</h3>
             <p class="price-tag">&pound;200<span> one-off</span></p>
           </article>
@@ -4499,10 +4499,10 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   
     <script src="./ai-session-memory.js?v=20260417aiwhole11"></script>
-  <script src="./app.js?v=20260715cvupload02"></script>
-<script src="./hosted-account-sync.js?v=20260712fdfplansync02"></script>
+  <script src="./app.js?v=20261015audit01"></script>
+<script src="./hosted-account-sync.js?v=20261015audit01"></script>
   <script src="./career-path-library.js?v=20260713globalaudience01"></script>
-    <script src="./cv-generator.js?v=20260515noatskeywords01"></script>
+    <script src="./cv-generator.js?v=20261015audit01"></script>
     <script>
       (function(){
         function daysState(){

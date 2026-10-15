@@ -74,7 +74,9 @@ final class Admin {
             }
             if (action.equals("createUser")) {
                 String role = role(str(payload, "role"));
-                Map<String, Object> account = accounts.create(c, str(payload, "email"), str(payload, "name"), str(payload, "password"), role);
+                String password = passwordValue(payload, "password");
+                Accounts.password(password);
+                Map<String, Object> account = accounts.create(c, str(payload, "email"), str(payload, "name"), password, role);
                 audit(c, action, str(account, "email"));
                 return of("ok", true, "message", "Account created.", "user", accounts.publicUser(account));
             }
@@ -87,29 +89,36 @@ final class Admin {
         if (account == null) throw new ApiException(404, "This account could not be found.");
         Map<String, Object> metadata = object(str(account, "metadata"));
         metadata.put("_neon_modified", true);
+        if (Set.of("resetUsage", "adjustUsage").contains(action) && one(c, "SELECT email FROM jma_usage WHERE email=?", email) == null)
+            execute(c, "INSERT INTO jma_usage(email) VALUES(?)", email);
         switch (action) {
-            case "deleteUser" -> execute(c, "DELETE FROM jma_accounts WHERE email=?", email);
+            case "deleteUser" -> {
+                execute(c, "DELETE FROM jma_otps WHERE email=?", email);
+                execute(c, "DELETE FROM jma_accounts WHERE email=?", email);
+            }
             case "changePassword" -> {
-                String password = first(payload, "password", "newPassword"); Accounts.password(password);
+                String password = passwordValue(payload, payload.containsKey("password") ? "password" : "newPassword"); Accounts.password(password);
                 execute(c, "UPDATE jma_accounts SET password_hash=? WHERE email=?", org.mindrot.jbcrypt.BCrypt.hashpw(password, org.mindrot.jbcrypt.BCrypt.gensalt(12)), email);
                 metadata.put("_legacy_password_pending", false);
                 execute(c, "DELETE FROM jma_sessions WHERE account_id=?", Accounts.id(account));
+                execute(c, "DELETE FROM jma_otps WHERE email=?", email);
             }
             case "setPremium", "setFree" -> Plans.set(metadata, action.equals("setFree") ? "free" : str(payload, "planType").isEmpty() ? "monthly" : str(payload, "planType"), Instant.now());
             case "setRole" -> {
                 String role = role(str(payload, "role")); metadata.put("role", role);
                 if (!role.equals("user")) Plans.set(metadata, "lifetime", Instant.now());
             }
-            case "adjustDaysRemaining" -> Plans.adjust(metadata, str(account, "created_at"), number(payload.get("delta"), 0), Instant.now());
+            case "adjustDaysRemaining" -> Plans.adjust(metadata, str(account, "created_at"), adjustment(payload.get("delta")), Instant.now());
             case "resetWeeklyFreeDayClaim" -> { metadata.put("weekly_free_day_claimed_at", ""); metadata.put("weeklyFreeDayClaimedAt", ""); }
             case "setPaneLock" -> {
                 String pane = first(payload, "paneId", "pane_id", "pane"); List<String> normalized = Plans.panes(pane);
                 if (normalized.size() != 1) throw new ApiException(400, "Choose a valid pane.");
                 pane = normalized.getFirst();
-                List<String> locked = Plans.panes(metadata.get("locked_panes")), unlocked = Plans.panes(metadata.get("unlocked_panes"));
+                List<String> locked = Plans.overrides(metadata, "locked"), unlocked = Plans.overrides(metadata, "unlocked");
                 locked.remove(pane); unlocked.remove(pane);
                 if ("lock".equals(str(payload, "mode")) || bool(payload.get("locked"))) locked.add(pane); else unlocked.add(pane);
                 metadata.put("locked_panes", locked); metadata.put("unlocked_panes", unlocked);
+                metadata.put("lockedPanes", locked); metadata.put("unlockedPanes", unlocked);
             }
             case "resetUsage" -> execute(c, "UPDATE jma_usage SET matches_used=0,searches_used=0,cv_generations_used=0 WHERE email=?", email);
             case "adjustUsage" -> {
@@ -119,8 +128,7 @@ final class Admin {
                     case "cv", "cv_generations_used", "cvGenerationsUsed" -> "cv_generations_used";
                     default -> throw new ApiException(400, "Choose a valid usage counter.");
                 };
-                int delta = number(payload.get("delta"), 0);
-                if (Math.abs(delta) != 1) throw new ApiException(400, "Use a one-step usage adjustment.");
+                int delta = adjustment(payload.get("delta"));
                 execute(c, "UPDATE jma_usage SET " + field + "=GREATEST(0," + field + "+?) WHERE email=?", delta, email);
             }
             case "pushUpdate" -> { }
@@ -136,6 +144,18 @@ final class Admin {
         if (value.isEmpty()) return "user";
         if (!Set.of("user", "admin", "super_admin").contains(value)) throw new ApiException(400, "Choose a valid account role.");
         return value;
+    }
+    private static String passwordValue(Map<String, Object> payload, String key) {
+        if (!payload.containsKey(key)) return "";
+        if (!(payload.get(key) instanceof String value)) throw new ApiException(400, "Enter a valid password.");
+        return value;
+    }
+    private static int adjustment(Object value) {
+        try {
+            int delta = new java.math.BigDecimal(str(value)).intValueExact();
+            if (delta == 1 || delta == -1) return delta;
+        } catch (NumberFormatException | ArithmeticException ignored) { }
+        throw new ApiException(400, "Use a one-step adjustment.");
     }
     private void audit(Connection c, String action, String email) throws SQLException {
         execute(c, "INSERT INTO jma_audit_log(id,actor,action,account_email) VALUES(?,?,?,?)", UUID.randomUUID(), "admin", action, email);

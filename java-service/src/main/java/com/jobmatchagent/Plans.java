@@ -50,11 +50,15 @@ final class Plans {
         return new ArrayList<>(result);
     }
     static boolean allowed(Map<String, Object> metadata, String created, String pane, Instant now) {
+        if (pane == null || !pane.matches("pane[1-9]")) return false;
         if (admin(metadata)) return true;
         if (remaining(metadata, created, now) == 0) return false;
-        if (panes(metadata.get("locked_panes")).contains(pane)) return false;
-        if (panes(metadata.get("unlocked_panes")).contains(pane)) return true;
+        if (overrides(metadata, "locked").contains(pane)) return false;
+        if (overrides(metadata, "unlocked").contains(pane)) return true;
         return !Set.of("free", "monthly").contains(type(metadata)) || !Set.of("pane4", "pane5", "pane9").contains(pane);
+    }
+    static List<String> overrides(Map<String, Object> metadata, String kind) {
+        return panes(metadata.getOrDefault(kind + "_panes", metadata.get(kind + "Panes")));
     }
     static void set(Map<String, Object> metadata, String plan, Instant now) {
         metadata.put("plan_type", normalize(plan));
@@ -82,7 +86,9 @@ final class Plans {
         if (previous.plus(7, ChronoUnit.DAYS).isAfter(now)) throw new ApiException(409, "You have already claimed your free day this week.");
         adjust(metadata, created, 1, now);
         metadata.put("weekly_free_day_claimed_at", now.toString());
+        metadata.put("weeklyFreeDayClaimedAt", now.toString());
         metadata.put("weekly_claim_plan_type", type(metadata));
+        metadata.put("weeklyClaimPlanType", type(metadata));
     }
     static Map<String, Object> snapshot(Map<String, Object> account) {
         Map<String, Object> metadata = object(str(account, "metadata"));
@@ -90,8 +96,8 @@ final class Plans {
         return of("ok", true, "email", account.get("email"), "planType", type(metadata),
             "subscriptionStartedAt", started(metadata, str(account, "created_at")).toString(),
             "paid", admin(metadata) || !type(metadata).equals("free"), "role", str(metadata, "role").isBlank() ? "user" : str(metadata, "role"),
-            "lockedPanes", panes(metadata.get("locked_panes")), "unlockedPanes", panes(metadata.get("unlocked_panes")),
-            "weeklyBonusDays", 0, "weeklyFreeDayClaimedAt", str(metadata, "weekly_free_day_claimed_at"),
-            "weeklyClaimPlanType", str(metadata, "weekly_claim_plan_type"), "daysRemaining", days == Integer.MAX_VALUE ? "Unlimited" : days);
+            "lockedPanes", overrides(metadata, "locked"), "unlockedPanes", overrides(metadata, "unlocked"),
+            "weeklyBonusDays", 0, "weeklyFreeDayClaimedAt", first(metadata, "weekly_free_day_claimed_at", "weeklyFreeDayClaimedAt"),
+            "weeklyClaimPlanType", first(metadata, "weekly_claim_plan_type", "weeklyClaimPlanType"), "daysRemaining", days == Integer.MAX_VALUE ? "Unlimited" : days);
     }
 }

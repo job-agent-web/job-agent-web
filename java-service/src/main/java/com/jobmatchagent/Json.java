@@ -8,7 +8,13 @@ final class Json {
     static final ObjectMapper MAPPER = new ObjectMapper();
     private Json() {}
     static Map<String, Object> object(String text) {
-        try { return MAPPER.readValue(text, new TypeReference<LinkedHashMap<String, Object>>() {}); }
+        try {
+            Map<String, Object> result = MAPPER.readerFor(new TypeReference<LinkedHashMap<String, Object>>() {})
+                .with(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+                .with(com.fasterxml.jackson.core.JsonParser.Feature.STRICT_DUPLICATE_DETECTION).readValue(text);
+            if (result == null) throw new IllegalArgumentException("JSON object required");
+            return result;
+        }
         catch (Exception e) { throw new ApiException(400, "Invalid JSON request."); }
     }
     static Object parse(String text) {

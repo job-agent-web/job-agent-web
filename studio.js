@@ -37,8 +37,43 @@
     return node;
   }
   const brand = `<a class="studio-brand" href="./index.html"><span class="studio-brand-symbol">${icon('path')}</span><span>Job Match Agent<small>THE CAREER WORKSPACE</small></span></a>`;
+  function setupDialogs() {
+    let current = null, returnFocus = null;
+    const dialogs = [...document.querySelectorAll('.limit-modal')];
+    const visible = node => !node.hidden && getComputedStyle(node).display !== 'none';
+    function sync() {
+      const next = dialogs.find(visible) || null;
+      if (next === current) return;
+      if (!next) {
+        current = null;
+        if (returnFocus?.isConnected) returnFocus.focus();
+        return;
+      }
+      returnFocus = document.activeElement;
+      current = next;
+      const card = next.querySelector('.limit-modal-card') || next;
+      card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true');
+      const heading = card.querySelector('h2, h3');
+      if (heading) { heading.id ||= next.id + 'Heading'; card.setAttribute('aria-labelledby', heading.id); }
+      card.tabIndex = -1;
+      card.focus({preventScroll:true});
+    }
+    dialogs.forEach(dialog => new MutationObserver(sync).observe(dialog, {attributes:true, attributeFilter:['hidden','style','class']}));
+    document.addEventListener('keydown', event => {
+      if (!current || !visible(current)) return;
+      const close = current.querySelector('#limitModalCloseBtn, #closeContactUsBtn, #closeAuthContactAdminBtn');
+      if (event.key === 'Escape' && close) { event.preventDefault(); close.click(); return; }
+      if (event.key !== 'Tab') return;
+      const items = [...current.querySelectorAll('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]')].filter(visible).filter(n=>n.getClientRects().length);
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !items.includes(document.activeElement))) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !items.includes(document.activeElement))) { event.preventDefault(); first?.focus(); }
+    });
+    sync();
+  }
   function boot() {
     if (document.body.dataset.studioReady) return;
+    setupDialogs();
     if (document.body.classList.contains('studio-auth')) {
       const intro = document.querySelector('.access-intro');
       const title = document.querySelector('.auth-title');
@@ -140,13 +175,20 @@
         const panel=$(tool.id), body=$(tool.id+'Body');
         if (!panel || !body) return;
         const button=panel.querySelector('.section-toggle');
+        if (panel.classList.contains('premium-pane-locked') || button?.classList.contains('pane-locked-toggle') || button?.disabled) {
+          $('choosePlanBtn')?.click(); toggleMenu(false); return;
+        }
         if (body.hidden || getComputedStyle(body).display==='none') {
           // Delegate access enforcement to the original control, never open a body directly.
           if (!button || button.disabled) { $('choosePlanBtn')?.click(); toggleMenu(false); return; }
           button.click();
         }
         requestAnimationFrame(()=>{
-          if (body.hidden || getComputedStyle(body).display==='none') { toggleMenu(false); return; }
+          if (body.hidden || getComputedStyle(body).display==='none') {
+            const modal = $('limitModal');
+            if (!modal || modal.hidden || getComputedStyle(modal).display === 'none') $('choosePlanBtn')?.click();
+            toggleMenu(false); return;
+          }
           document.querySelectorAll('[data-studio-active]').forEach(p=>p.removeAttribute('data-studio-active'));
           panel.setAttribute('data-studio-active','true');document.body.classList.add('studio-tool-mode');active=tool.id;
           label.textContent=tool.name;focusHeading.querySelector('h1').textContent=tool.name;

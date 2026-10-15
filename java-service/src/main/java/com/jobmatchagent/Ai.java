@@ -114,15 +114,20 @@ final class Ai {
     }
     String get(String key, String fallback) { String value = env.get(key); return value == null || value.isBlank() ? fallback : value.trim(); }
     Result generate(String system, String prompt, List<String> order, int tokens, boolean json) throws Exception {
+        return generate(system, prompt, order, tokens, json, parsed -> {});
+    }
+    private Result generate(String system, String prompt, List<String> order, int tokens, boolean json,
+                            java.util.function.Consumer<Map<String, Object>> validate) throws Exception {
         for (String provider : order) {
             if (!configured(provider)) continue;
             try {
                 Result result = call(provider, system + "\n" + GLOBAL, prompt, tokens, json);
                 if (!result.text().isBlank()) {
-                    if (json) object(extractJson(result.text()));
+                    if (json) validate.accept(object(extractJson(result.text())));
                     return result;
                 }
-            } catch (Exception e) { System.err.println("AI attempt failed: " + provider + " (" + (e instanceof ProviderException error ? error.status + ":" + error.category : e.getClass().getSimpleName()) + ")"); }
+            } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw e; }
+            catch (Exception e) { System.err.println("AI attempt failed: " + provider + " (" + (e instanceof ProviderException error ? error.status + ":" + error.category : e.getClass().getSimpleName()) + ")"); }
         }
         throw new ApiException(503, "The AI services are unavailable right now. Please try again shortly.");
     }
@@ -163,19 +168,28 @@ final class Ai {
             throw error;
         }
         Map<String, Object> body = object(response.body());
+        if (body == null || body.get("error") != null || Boolean.FALSE.equals(body.get("success")) || !list(body.get("errors")).isEmpty())
+            throw new ProviderException(502);
         String text;
         if (provider.equals("gemini")) {
             List<String> parts = new ArrayList<>();
-            for (Object candidate : list(body.get("candidates"))) for (Object part : list(map(map(candidate).get("content")).get("parts"))) {
-                if (!bool(map(part).get("thought"))) parts.add(str(map(part), "text"));
+            List<Object> candidates = list(body.get("candidates"));
+            Map<String, Object> candidate = candidates.isEmpty() ? Map.of() : map(candidates.getFirst());
+            String finish = str(candidate, "finishReason");
+            if (!finish.isBlank() && !finish.equals("STOP")) throw new ProviderException(502);
+            for (Object part : list(map(candidate.get("content")).get("parts"))) {
+                if (!bool(map(part).get("thought"))) parts.add(text(map(part).get("text")));
             }
             text = String.join("\n", parts);
-        } else if (provider.equals("cloudflare")) text = str(map(body.get("result")), "response");
+        } else if (provider.equals("cloudflare")) text = text(map(body.get("result")).get("response"));
         else {
             List<Object> choices = list(body.get("choices"));
-            text = choices.isEmpty() ? "" : str(map(map(choices.getFirst()).get("message")), "content");
+            Map<String, Object> choice = choices.isEmpty() ? Map.of() : map(choices.getFirst());
+            String finish = str(choice, "finish_reason");
+            if (!finish.isBlank() && !finish.equals("stop")) throw new ProviderException(502);
+            text = text(map(choice.get("message")).get("content"));
         }
-        return new Result(text.strip(), provider, model);
+        return new Result(withoutThinking(text), provider, model);
     }
     Map<String, Object> run(String feature, Map<String, Object> body) throws Exception {
         if (feature.equals("ai-health")) return of("ok", true, "runtime", "java", "database", "neon-postgresql", "providers", providers(), "message", "Configuration check only. Configured credentials do not guarantee available quota or a successful generation.");
@@ -188,11 +202,12 @@ final class Ai {
         Map<String, Object> data = map(body.get("data"));
         switch (feature) {
             case "generate-cv" -> {
-                if (str(data, "name").isBlank() || list(data.get("roles")).isEmpty() || str(data, "jobDescription").isBlank())
+                if (text(data.get("name")).isBlank() || list(data.get("roles")).isEmpty() || text(data.get("jobDescription")).isBlank()
+                    || list(data.get("roles")).stream().anyMatch(role -> text(map(role).get("title")).isBlank()))
                     throw new ApiException(400, "Enter your name, experience, and target job description.");
             }
             case "generate-cover-letter" -> {
-                if (str(body, "jobTitle").isBlank() || str(body, "jobDescription").isBlank())
+                if (text(body.get("jobTitle")).isBlank() || text(body.get("jobDescription")).isBlank())
                     throw new ApiException(400, "Enter a target role and job description.");
                 try (var c = db.open()) {
                     Map<String, Object> samples = Admin.settings(c);
@@ -201,36 +216,41 @@ final class Ai {
                 }
                 system += "\nWrite 750 to 950 words in 5 to 7 substantial paragraphs separated by blank lines. Greeting and closing must each be separate paragraphs. Do not include employment dates, Civil Service Cover Letter headings, NHS headings, drafting notes or provider names. Tailor every paragraph to the candidate evidence and target vacancy. If no CV is provided do not invent personal history.";
             }
-            case "chat-with-rex" -> { if (str(body, "message").isBlank()) throw new ApiException(400, "Type a message for Rex."); }
-            case "career-path-planner" -> { if (str(body, "goal").isBlank()) throw new ApiException(400, "Enter a career goal."); }
-            case "generate-interview-questions" -> { if (str(body, "jobDescription").isBlank()) throw new ApiException(400, "Paste the job description."); }
-            case "score-cv" -> { if (str(body, "cvText").isBlank()) throw new ApiException(400, "Upload or paste a CV to score."); }
+            case "chat-with-rex" -> { if (text(body.get("message")).isBlank()) throw new ApiException(400, "Type a message for Rex."); }
+            case "career-path-planner" -> { if (text(body.get("goal")).isBlank()) throw new ApiException(400, "Enter a career goal."); }
+            case "generate-interview-questions" -> { if (text(body.get("jobDescription")).isBlank()) throw new ApiException(400, "Paste the job description."); }
+            case "score-cv" -> { if (text(body.get("cvText")).isBlank()) throw new ApiException(400, "Upload or paste a CV to score."); }
             default -> { }
         }
         boolean structured = !Set.of("generate-cover-letter", "chat-with-rex").contains(feature);
         List<String> order = Set.of("generate-cv", "generate-cover-letter", "chat-with-rex").contains(feature)
             ? List.of("gptoss", "deepseek", "gemini", "cloudflare", "huggingface") : List.of("gemini", "gptoss", "deepseek", "cloudflare", "huggingface");
         String prompt = "Generate the requested result from this supplied data:\n" + stringify(body);
-        Result result = generate(system, prompt, order, feature.equals("chat-with-rex") ? 1000 : 4500, structured);
+        Result result = generate(system, prompt, order, feature.equals("chat-with-rex") ? 1000 : 4500, structured,
+            parsed -> validateResult(feature, parsed, data));
         boolean refined = false;
         if (feature.equals("generate-cover-letter")) {
             if (configured("gemini") && !result.provider().equals("gemini")) {
                 try {
-                    Result refinement = call("gemini", system, "Refine this draft using the supplied evidence. Preserve facts and provide only the complete final letter, 750 to 950 words.\n" + prompt + "\nDraft:\n" + result.text(), 4500, false);
-                    if (wordCount(refinement.text()) >= 750 && wordCount(refinement.text()) <= 950) { result = refinement; refined = true; }
-                } catch (Exception e) { System.err.println("Cover-letter refinement unavailable."); }
+                    Result refinement = call("gemini", system + "\n" + GLOBAL, "Refine this draft using the supplied evidence. Preserve facts and provide only the complete final letter, 750 to 950 words.\n" + prompt + "\nDraft:\n" + result.text(), 4500, false);
+                    int words = wordCount(cleanLetter(refinement.text()));
+                    if (words >= 750 && words <= 950) { result = refinement; refined = true; }
+                } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw e; }
+                catch (Exception e) { System.err.println("Cover-letter refinement unavailable."); }
             }
             String letter = cleanLetter(result.text());
             if (wordCount(letter) < 750 || wordCount(letter) > 950) {
                 result = generate(system, prompt + "\nRewrite this draft to 750-950 words using only supplied evidence.\n" + letter, order, 4500, false);
+                refined = false;
                 letter = cleanLetter(result.text());
             }
             if (wordCount(letter) < 750 || wordCount(letter) > 950) throw new ApiException(502, "The AI draft did not meet the requested word range. Please generate again.");
             return of("ok", true, "text", letter, "provider", result.provider(), "model", result.model(), "qualityReviewed", refined);
         }
         Map<String, Object> output = of("ok", true, "provider", result.provider(), "model", result.model());
-        if (!structured) { output.put("text", result.text().replace("*", "")); return output; }
+        if (!structured) { output.put("text", result.text()); return output; }
         Map<String, Object> parsed = object(extractJson(result.text()));
+        validateResult(feature, parsed, data);
         switch (feature) {
             case "generate-cv" -> output.put("document", cv(parsed, data));
             case "score-cv" -> {
@@ -239,7 +259,6 @@ final class Ai {
                 output.put("analysis", parsed);
             }
             case "generate-interview-questions" -> {
-                if (list(parsed.get("questions")).isEmpty()) throw new ApiException(502, "The AI did not return interview questions.");
                 output.put("questions", parsed.get("questions"));
             }
             case "career-path-planner" -> {
@@ -250,18 +269,67 @@ final class Ai {
         }
         return output;
     }
+    private static String text(Object value) { return value instanceof String string ? string.strip() : ""; }
+    private static List<String> strings(Object value, int minimum) {
+        if (!(value instanceof List<?> items) || items.size() < minimum
+            || items.stream().anyMatch(item -> text(item).isBlank()))
+            throw new ApiException(502, "The AI returned an incomplete list.");
+        return items.stream().map(Ai::text).distinct().toList();
+    }
+    private static void validateResult(String feature, Map<String, Object> parsed, Map<String, Object> data) {
+        switch (feature) {
+            case "generate-cv" -> cv(parsed, data);
+            case "score-cv" -> {
+                double score;
+                try { score = Double.parseDouble(str(parsed.get("score"))); }
+                catch (NumberFormatException e) { throw new ApiException(502, "The AI did not return a usable score."); }
+                if (!Double.isFinite(score) || text(parsed.get("verdict")).isBlank())
+                    throw new ApiException(502, "The AI did not return a usable score.");
+                for (String key : List.of("strengths", "weaknesses", "improvements", "atsFindings"))
+                    parsed.put(key, strings(parsed.get(key), 1));
+            }
+            case "generate-interview-questions" -> {
+                List<String> questions = strings(parsed.get("questions"), 18);
+                if (questions.size() < 18 || questions.size() > 24)
+                    throw new ApiException(502, "The AI did not return 18 to 24 unique interview questions.");
+                parsed.put("questions", questions);
+            }
+            case "career-path-planner" -> {
+                if (text(parsed.get("track")).isBlank()) throw new ApiException(502, "The AI did not return a career track.");
+                parsed.put("steps", strings(parsed.get("steps"), 1));
+                for (String key : List.of("certifications", "channels")) parsed.put(key, strings(parsed.getOrDefault(key, List.of()), 0));
+            }
+            case "search-results-insights" -> {
+                if (text(parsed.get("summary")).isBlank()) throw new ApiException(502, "The AI did not return a search summary.");
+                parsed.put("highlights", strings(parsed.get("highlights"), 0));
+            }
+            default -> { }
+        }
+    }
     static Map<String, Object> cv(Map<String, Object> parsed, Map<String, Object> data) {
-        if (str(parsed, "profile").isBlank() || list(parsed.get("roles")).size() != list(data.get("roles")).size())
+        if (text(parsed.get("profile")).isBlank() || list(parsed.get("roles")).size() != list(data.get("roles")).size())
             throw new ApiException(502, "The AI did not return a complete CV.");
-        Map<String, Object> result = new LinkedHashMap<>(parsed);
+        Map<String, Object> result = of("profile", text(parsed.get("profile")), "skills", strings(parsed.get("skills"), 1));
         for (String key : List.of("name", "phone", "email", "address")) result.put(key, str(data, key));
+        // Qualifications are facts supplied by the candidate, not generated content.
+        for (String key : List.of("certifications", "education")) {
+            List<Object> credentials = new ArrayList<>();
+            for (Object item : list(data.get(key))) {
+                Map<String, Object> source = map(item);
+                String line = text(source.get("line"));
+                if (line.isBlank()) line = String.join(" | ", List.of("name", "issuer", "date", "notes").stream()
+                    .map(field -> text(source.get(field))).filter(value -> !value.isBlank()).toList());
+                if (!line.isBlank()) credentials.add(of("line", line));
+            }
+            result.put(key, credentials);
+        }
         List<Object> roles = new ArrayList<>();
         for (int i = 0; i < list(data.get("roles")).size(); i++) {
             Map<String, Object> source = map(list(data.get("roles")).get(i));
-            Map<String, Object> generated = new LinkedHashMap<>(map(list(parsed.get("roles")).get(i)));
+            Map<String, Object> generated = new LinkedHashMap<>();
             generated.put("title", str(source, "title")); generated.put("employer", str(source, "employer"));
             generated.put("dates", str(source, "start") + " - " + (bool(source.get("current")) ? "Present" : str(source, "end")));
-            List<String> duties = list(generated.get("duties")).stream().map(Json::str)
+            List<String> duties = strings(map(list(parsed.get("roles")).get(i)).get("duties"), 4).stream()
                 .map(duty -> duty.replaceFirst("(?i)^As\\s+" + java.util.regex.Pattern.quote(str(source, "title")) + "[, :]\\s*", ""))
                 .filter(duty -> !duty.isBlank()).distinct().toList();
             if (duties.size() < 4) throw new ApiException(502, "The AI did not return four duties for every role.");
@@ -272,17 +340,21 @@ final class Ai {
         return result;
     }
     static String extractJson(String value) {
-        String clean = value.replaceAll("(?s)<think>.*?</think>", "").strip();
+        String clean = withoutThinking(value);
         int first = clean.indexOf('{'), last = clean.lastIndexOf('}');
         if (first < 0 || last < first) throw new ApiException(502, "The AI response was incomplete.");
         return clean.substring(first, last + 1);
     }
     static String cleanLetter(String text) {
-        return text.replaceAll("(?s)<think>.*?</think>", "").replace("**", "").replace("```", "")
+        return withoutThinking(text).replace("\r\n", "\n").replace("\r", "\n").replace("**", "")
+            .replaceAll("(?m)^\\s*```[^\\n]*$", "")
             .replaceAll("(?im)^\\s*(Civil Service Cover Letter|NHS Cover Letter)\\s*\\n", "")
             .replaceAll("(?m)^(Dear [^\\n]+,)\\s*\\n(?!\\n)", "$1\n\n")
             .replaceAll("(?m)\\n\\s*(Yours (?:faithfully|sincerely)|Kind regards)", "\n\n$1")
             .replaceAll("\\n{3,}", "\n\n").strip();
+    }
+    private static String withoutThinking(String value) {
+        return value.replaceAll("(?is)<think>.*?(?:</think>|$)", "").strip();
     }
     static int wordCount(String text) { return text.isBlank() ? 0 : text.strip().split("\\s+").length; }
     static String encoded(String text) { return URLEncoder.encode(text, StandardCharsets.UTF_8).replace("+", "%20"); }

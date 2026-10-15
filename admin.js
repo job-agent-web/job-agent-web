@@ -1,5 +1,34 @@
 ﻿var adminSecretKey = "jobMatchAgentAdminSecret";
 var adminFixedPasskey = ["job", "agent"].join("-");
+document.addEventListener("DOMContentLoaded", function () {
+  var button = document.getElementById("checkAiConnectionsBtn"), status = document.getElementById("aiConnectionsStatus");
+  if (!button || !status) return;
+  button.addEventListener("click", async function () {
+    if (button.disabled) return;
+    button.disabled = true;
+    status.textContent = "Checking each provider. This can take up to two minutes.";
+    try {
+      var response = await fetch(adminFunctionUrl("/.netlify/functions/ai-diagnostics"), {
+        method: "POST", headers: {"content-type":"application/json", "x-admin-secret":getValidatedAdminSecret()}, body: "{}"
+      });
+      var data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || "AI connection checks could not be completed.");
+      var names = {gemini:"Gemini",deepseek:"DeepSeek",gptoss:"GPT-OSS",cloudflare:"Cloudflare",huggingface:"Hugging Face"};
+      var reasons = {"credits-exhausted":"Add credits in the provider account", "rate-limit-or-quota":"Provider quota or rate limit reached", "credentials-or-permissions":"Check the provider key and permissions", "model-or-endpoint-not-found":"Check the configured model", "timeout":"Provider timed out", "provider-unavailable":"Provider is temporarily unavailable", "invalid-request":"Check the provider configuration"};
+      status.replaceChildren();
+      var list = document.createElement("ul");
+      Object.keys(data.checks || {}).forEach(function (provider) {
+        var check = data.checks[provider], item = document.createElement("li");
+        var message = !check.configured ? "Not configured" : check.usable ? "Connected and responding" : reasons[check.category] || "Connection failed; check provider settings";
+        if (check.providerCode === "CF_ACCOUNT_ID_INVALID") message = "Set a valid Cloudflare account ID";
+        item.textContent = (names[provider] || provider) + ": " + message;
+        list.append(item);
+      });
+      status.append(list);
+    } catch (error) { status.textContent = error.message || "AI connection checks could not be completed."; }
+    finally { button.disabled = false; }
+  });
+});
 var generatorConfigKey = "jobMatchAgentGeneratorConfig";
 var openAiKeyStorageKey = "jobMatchAgentOpenAiKey";
 var openAiModelStorageKey = "jobMatchAgentOpenAiModel";

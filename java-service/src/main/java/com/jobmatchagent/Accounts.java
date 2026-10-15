@@ -33,6 +33,11 @@ final class Accounts {
         return one(connection, "SELECT * FROM jma_accounts WHERE email=?" + (lock ? " FOR UPDATE" : ""), email.toLowerCase(Locale.ROOT));
     }
     static UUID id(Map<String, Object> account) { return UUID.fromString(str(account, "id")); }
+    Map<String, Object> lock(Connection c, Map<String, Object> account) throws SQLException {
+        Map<String, Object> fresh = one(c, "SELECT * FROM jma_accounts WHERE id=? FOR UPDATE", id(account));
+        if (fresh == null) throw new ApiException(401, "Your session has expired. Please sign in again.");
+        return fresh;
+    }
     static String email(String raw) {
         String email = raw.strip().toLowerCase(Locale.ROOT);
         if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$") || email.length() > 254)
@@ -67,7 +72,7 @@ final class Accounts {
     Map<String, Object> login(Map<String, Object> body) throws Exception {
         String email = email(str(body, "email"));
         String password = body.get("password") instanceof String value ? value : "";
-        if (password.length() > 256) throw new ApiException(400, "Invalid email or password.");
+        if (password.getBytes(StandardCharsets.UTF_8).length > 72) throw new ApiException(400, "Invalid email or password.");
         return db.transaction(c -> {
             Map<String, Object> account = find(c, email, true);
             String hash = account == null ? DUMMY_HASH : str(account, "password_hash");
@@ -105,10 +110,13 @@ final class Accounts {
     }
     Map<String, Object> refresh(String token) throws Exception {
         return db.transaction(c -> {
-            Map<String, Object> row = one(c, "SELECT * FROM jma_sessions WHERE refresh_hash=? AND expires_at>CURRENT_TIMESTAMP FOR UPDATE", digest(token));
+            Map<String, Object> row = one(c, "SELECT * FROM jma_sessions WHERE refresh_hash=? AND expires_at>CURRENT_TIMESTAMP", digest(token));
+            if (row == null) throw new ApiException(401, "Your session has expired. Please sign in again.");
+            // Match login/password-reset lock order before rotating the session.
+            Map<String, Object> account = lock(c, of("id", row.get("account_id")));
+            row = one(c, "SELECT * FROM jma_sessions WHERE refresh_hash=? AND expires_at>CURRENT_TIMESTAMP FOR UPDATE", digest(token));
             if (row == null) throw new ApiException(401, "Your session has expired. Please sign in again.");
             execute(c, "DELETE FROM jma_sessions WHERE refresh_hash=?", digest(token));
-            Map<String, Object> account = one(c, "SELECT * FROM jma_accounts WHERE id=?", UUID.fromString(str(row, "account_id")));
             return issue(c, account);
         });
     }
@@ -135,11 +143,11 @@ final class Accounts {
         catch (Exception e) { throw new ApiException(401, "Invalid session. Please sign in again."); }
     }
     void signOut(Map<String, Object> account) throws Exception {
-        try (Connection c = db.open()) { execute(c, "DELETE FROM jma_sessions WHERE account_id=?", id(account)); }
+        db.transaction(c -> { lock(c, account); execute(c, "DELETE FROM jma_sessions WHERE account_id=?", id(account)); return null; });
     }
     Map<String, Object> update(Map<String, Object> account, Map<String, Object> body) throws Exception {
         return db.transaction(c -> {
-            Map<String, Object> locked = find(c, str(account, "email"), true);
+            Map<String, Object> locked = lock(c, account);
             Map<String, Object> metadata = object(str(locked, "metadata"));
             metadata.put("_neon_modified", true);
             Map<String, Object> data = map(body.get("data"));
@@ -150,6 +158,8 @@ final class Accounts {
                 execute(c, "UPDATE jma_accounts SET password_hash=? WHERE id=?", BCrypt.hashpw(password, BCrypt.gensalt(12)), id(locked));
                 metadata.put("_legacy_password_pending", false);
                 execute(c, "UPDATE jma_accounts SET metadata=? WHERE id=?", stringify(metadata), id(locked));
+                execute(c, "DELETE FROM jma_sessions WHERE account_id=?", id(locked));
+                execute(c, "DELETE FROM jma_otps WHERE email=?", locked.get("email"));
             }
             return publicUser(find(c, str(account, "email"), false));
         });
@@ -159,10 +169,11 @@ final class Accounts {
         boolean create = !Boolean.FALSE.equals(body.get("create_user"));
         String name = first(map(body.get("data")), "user_name", "full_name");
         if (usesLegacyEmail()) return db.transaction(c -> {
+            Map<String, Object> account = find(c, email, true);
             Map<String, Object> prior = one(c, "SELECT * FROM jma_otps WHERE email=? FOR UPDATE", email);
             if (prior != null && Plans.instant(str(prior, "sent_at"), Instant.EPOCH).plusSeconds(60).isAfter(Instant.now()))
                 throw new ApiException(429, "Please wait a minute before requesting another code.");
-            if (!create && find(c, email, false) == null) return of("ok", true);
+            if (!create && account == null) return of("ok", true);
             legacy.sendOtp(email, name, create);
             execute(c, "DELETE FROM jma_otps WHERE email=?", email);
             execute(c, "INSERT INTO jma_otps(email,code_hash,account_name,create_account,expires_at) VALUES(?,?,?,?,?)", email, "legacy-email", name, create, Instant.now().plusSeconds(600));
@@ -170,10 +181,11 @@ final class Accounts {
         });
         String code = String.format("%06d", RANDOM.nextInt(1000000));
         return db.transaction(c -> {
+            Map<String, Object> account = find(c, email, true);
             Map<String, Object> prior = one(c, "SELECT * FROM jma_otps WHERE email=? FOR UPDATE", email);
             if (prior != null && Plans.instant(str(prior, "sent_at"), Instant.EPOCH).plusSeconds(60).isAfter(Instant.now()))
                 throw new ApiException(429, "Please wait a minute before requesting another code.");
-            if (!create && find(c, email, false) == null) return of("ok", true);
+            if (!create && account == null) return of("ok", true);
             execute(c, "DELETE FROM jma_otps WHERE email=?", email);
             execute(c, "INSERT INTO jma_otps(email,code_hash,account_name,create_account,expires_at) VALUES(?,?,?,?,?)",
                 email, otpHash(email, code), name, create, Instant.now().plusSeconds(600));
@@ -184,6 +196,7 @@ final class Accounts {
     Map<String, Object> verifyOtp(Map<String, Object> body) throws Exception {
         String email = email(str(body, "email"));
         Map<String, Object> result = db.transaction(c -> {
+            Map<String, Object> account = find(c, email, true);
             Map<String, Object> row = one(c, "SELECT * FROM jma_otps WHERE email=? FOR UPDATE", email);
             if (row == null || number(row.get("attempts"), 0) >= 5 || !Plans.instant(str(row, "expires_at"), Instant.EPOCH).isAfter(Instant.now()))
                 return of("invalid", true);
@@ -194,14 +207,16 @@ final class Accounts {
             } else if (!MessageDigest.isEqual(str(row, "code_hash").getBytes(StandardCharsets.UTF_8), otpHash(email, str(body, "token")).getBytes(StandardCharsets.UTF_8)))
                 return of("invalid", true);
             execute(c, "DELETE FROM jma_otps WHERE email=?", email);
-            Map<String, Object> account = find(c, email, true);
             if (account == null) {
                 if (!bool(row.get("create_account"))) return of("invalid", true);
                 account = create(c, email, str(row, "account_name"), "", "user");
             }
+            Map<String, Object> metadata = object(str(account, "metadata"));
+            metadata.put("_neon_modified", true);
+            execute(c, "UPDATE jma_accounts SET metadata=? WHERE id=?", stringify(metadata), id(account));
             execute(c, "UPDATE jma_accounts SET last_sign_in_at=? WHERE id=?", Instant.now(), id(account));
             execute(c, "DELETE FROM jma_sessions WHERE account_id=?", id(account));
-            return issue(c, account);
+            return issue(c, find(c, email, false));
         });
         if (bool(result.get("invalid"))) throw new ApiException(400, "The verification code is invalid or has expired.");
         return result;

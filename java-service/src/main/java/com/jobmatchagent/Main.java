@@ -161,6 +161,7 @@ public final class Main implements AutoCloseable {
         String name = path.substring(path.lastIndexOf('/') + 1);
         if (name.equals("migration-control")) {
             method(exchange, "POST");
+            rateLimit(exchange);
             String supplied = Optional.ofNullable(exchange.getRequestHeaders().getFirst("X-Migration-Secret")).orElse("");
             String expected = env.getOrDefault("MIGRATION_CONTROL_SECRET", "");
             if (expected.isBlank() || !java.security.MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), supplied.getBytes(StandardCharsets.UTF_8)))
@@ -169,7 +170,8 @@ public final class Main implements AutoCloseable {
             return legacyImport.run(bool(body.get("apply")));
         }
         if (name.equals("admin-users") || name.equals("admin-manage-user")) {
-            admin.authorize(Optional.ofNullable(exchange.getRequestHeaders().getFirst("X-Admin-Secret")).orElse(""));
+            try { admin.authorize(Optional.ofNullable(exchange.getRequestHeaders().getFirst("X-Admin-Secret")).orElse("")); }
+            catch (ApiException error) { if (error.status == 401) rateLimit(exchange); throw error; }
             if (name.equals("admin-users")) { method(exchange, "GET"); return admin.users(); }
             method(exchange, "POST"); return admin.action(body);
         }
@@ -187,8 +189,14 @@ public final class Main implements AutoCloseable {
             return of("ok", false, "message", "No account matched that email or username.");
         }
         if (name.equals("ai-health")) { method(exchange, "GET"); return ai.run(name, body); }
+        if (name.equals("ai-diagnostics")) {
+            method(exchange, "POST");
+            try { admin.authorize(Optional.ofNullable(exchange.getRequestHeaders().getFirst("X-Admin-Secret")).orElse("")); }
+            catch (ApiException error) { if (error.status == 401) rateLimit(exchange); throw error; }
+            return ai.diagnostics();
+        }
         if (name.equals("ai-smoke-test")) {
-            method(exchange, "GET"); admin.authorize(Optional.ofNullable(exchange.getRequestHeaders().getFirst("X-Admin-Secret")).orElse("")); return ai.run(name, body);
+            method(exchange, "GET"); rateLimit(exchange); admin.authorize(Optional.ofNullable(exchange.getRequestHeaders().getFirst("X-Admin-Secret")).orElse("")); return ai.run(name, body);
         }
         Map<String, Object> account = accounts.authenticate(authorization);
         if (name.equals("current-user-plan")) { method(exchange, "GET"); return Plans.snapshot(account); }
@@ -197,7 +205,7 @@ public final class Main implements AutoCloseable {
         method(exchange, "POST");
         if (name.equals("claim-weekly-day")) {
             return db.transaction(c -> {
-                Map<String, Object> locked = accounts.find(c, str(account, "email"), true);
+                Map<String, Object> locked = accounts.lock(c, account);
                 Map<String, Object> metadata = object(str(locked, "metadata"));
                 Plans.claim(metadata, str(locked, "created_at"), Instant.now());
                 metadata.put("_neon_modified", true);
@@ -242,25 +250,34 @@ public final class Main implements AutoCloseable {
     private static String counter(String feature) { return feature.equals("generate-cv") ? "cv_generations_used" : feature.equals("generate-cover-letter") ? "matches_used" : ""; }
     private void reserve(Map<String, Object> account, String pane, String feature) throws Exception {
         db.transaction(c -> {
-            Map<String, Object> fresh = accounts.find(c, str(account, "email"), true); requirePane(fresh, pane);
+            Map<String, Object> fresh = accounts.lock(c, account); requirePane(fresh, pane);
             String counter = counter(feature);
             if (!counter.isEmpty()) {
+                if (one(c, "SELECT email FROM jma_usage WHERE email=?", fresh.get("email")) == null)
+                    execute(c, "INSERT INTO jma_usage(email) VALUES(?)", fresh.get("email"));
                 Map<String, Object> row = usage(c, fresh);
                 if (!Plans.admin(object(str(fresh, "metadata"))) && Plans.type(object(str(fresh, "metadata"))).equals("free") && number(row.get(counter), 0) >= 5)
                     throw new ApiException(403, "Your free generation allowance is used up. Choose a plan to continue.");
                 execute(c, "UPDATE jma_usage SET " + counter + "=" + counter + "+1 WHERE email=?", fresh.get("email"));
+                Map<String, Object> metadata = object(str(fresh, "metadata"));
+                metadata.put("_neon_modified", true);
+                execute(c, "UPDATE jma_accounts SET metadata=? WHERE id=?", stringify(metadata), Accounts.id(fresh));
             }
             return null;
         });
     }
     private void release(Map<String, Object> account, String feature) throws Exception {
         String field = counter(feature);
-        if (!field.isEmpty()) try (Connection c = db.open()) { execute(c, "UPDATE jma_usage SET " + field + "=GREATEST(0," + field + "-1) WHERE email=?", account.get("email")); }
+        if (!field.isEmpty()) try (Connection c = db.open()) {
+            execute(c, "UPDATE jma_usage SET " + field + "=GREATEST(0," + field + "-1) WHERE email=? AND EXISTS (SELECT 1 FROM jma_accounts WHERE id=? AND email=?)",
+                account.get("email"), Accounts.id(account), account.get("email"));
+        }
     }
     private void saveAiUsage(Map<String, Object> account, String pane, Map<String, Object> result) throws Exception {
         db.transaction(c -> {
-            Map<String, Object> fresh = accounts.find(c, str(account, "email"), true);
+            Map<String, Object> fresh = accounts.lock(c, account);
             Map<String, Object> metadata = object(str(fresh, "metadata"));
+            metadata.put("_neon_modified", true);
             metadata.put("ai_last_pane", pane); metadata.put("ai_last_pane_label", "Pane " + pane.substring(4));
             metadata.put("ai_last_model", str(result, "model")); metadata.put("ai_last_source", str(result, "provider"));
             metadata.put("ai_last_route", str(result, "provider")); metadata.put("ai_last_used_at", Instant.now().toString());

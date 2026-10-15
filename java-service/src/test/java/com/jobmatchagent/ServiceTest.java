@@ -125,4 +125,163 @@ class ServiceTest {
         assertEquals(200, manage("setCoverLetterGeneratorConfig", of("config", config)).status());
         try (Connection c = db.open()) { assertEquals(config, Admin.settings(c)); }
     }
+    @Test void adminPasswordsPreserveWhitespaceAndRejectNonStrings() throws Exception {
+        String password = "  exact-password  ";
+        assertEquals(200, manage("createUser", of("email", "spaces@example.com", "password", password)).status());
+        assertEquals(200, request("POST", "/auth/v1/token", of("email", "spaces@example.com", "password", password), "").status());
+        assertEquals(400, request("POST", "/auth/v1/token", of("email", "spaces@example.com", "password", password.strip()), "").status());
+        assertEquals(200, manage("changePassword", of("email", "candidate@example.com", "newPassword", password)).status());
+        assertEquals(200, request("POST", "/auth/v1/token", of("email", "candidate@example.com", "password", password), "").status());
+        assertEquals(400, manage("changePassword", of("email", "candidate@example.com", "password", 123456789)).status());
+    }
+    @Test void loginRejectsPasswordsBeyondBcryptByteLimit() throws Exception {
+        String password = "x".repeat(72);
+        assertEquals(200, manage("changePassword", of("email", "candidate@example.com", "password", password)).status());
+        assertEquals(200, request("POST", "/auth/v1/token", of("email", "candidate@example.com", "password", password), "").status());
+        assertEquals(400, request("POST", "/auth/v1/token", of("email", "candidate@example.com", "password", password + "suffix"), "").status());
+    }
+    @Test void passwordUpdateRevokesSessionsAndPendingCodes() throws Exception {
+        var session = request("POST", "/auth/v1/token", of("email", "candidate@example.com", "password", "test-password"), "").body();
+        seedOtp(true);
+        assertEquals(200, request("PUT", "/auth/v1/user", of("password", "replacement-password"), token).status());
+        assertEquals(401, request("GET", "/auth/v1/user", null, str(session, "access_token")).status());
+        assertEquals(401, request("POST", "/auth/v1/token?grant_type=refresh_token", of("refresh_token", session.get("refresh_token")), "").status());
+        assertEquals(400, request("POST", "/auth/v1/verify", of("email", "candidate@example.com", "token", "123456"), "").status());
+        assertEquals(200, request("POST", "/auth/v1/token", of("email", "candidate@example.com", "password", "replacement-password"), "").status());
+    }
+    @Test void adminDeleteAndPasswordResetInvalidatePendingCodes() throws Exception {
+        seedOtp(true);
+        assertEquals(200, manage("changePassword", of("email", "candidate@example.com", "password", "replacement-password")).status());
+        assertEquals(400, request("POST", "/auth/v1/verify", of("email", "candidate@example.com", "token", "123456"), "").status());
+        seedOtp(true);
+        assertEquals(200, manage("deleteUser", of("email", "candidate@example.com")).status());
+        assertEquals(400, request("POST", "/auth/v1/verify", of("email", "candidate@example.com", "token", "123456"), "").status());
+        try (Connection c = db.open()) { assertNull(app.accounts.find(c, "candidate@example.com", false)); }
+    }
+    private void seedOtp(boolean create) throws Exception {
+        try (Connection c = db.open()) {
+            execute(c, "INSERT INTO jma_otps(email,code_hash,create_account,expires_at) VALUES(?,?,?,?)", "candidate@example.com",
+                app.accounts.otpHash("candidate@example.com", "123456"), create, Instant.now().plusSeconds(600));
+        }
+    }
+    @Test void malformedJsonIsAClientErrorAndCannotMutateState() throws Exception {
+        for (String input : List.of("null", "[]", "{} {}", "{\"action\":\"x\",\"action\":\"y\"}")) {
+            var response = client.send(HttpRequest.newBuilder(URI.create(base + "/auth/v1/user"))
+                .header("Authorization", "Bearer " + token).PUT(HttpRequest.BodyPublishers.ofString(input)).build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(400, response.statusCode(), input);
+        }
+    }
+    @Test void missingUsageRowIsRepairedBeforeQuotaReservation() throws Exception {
+        try (Connection c = db.open()) { execute(c, "DELETE FROM jma_usage WHERE email=?", "candidate@example.com"); }
+        assertEquals(503, request("POST", "/api/generate-cv", of("data", of("name", "Candidate", "roles", List.of(of("title", "Data Analyst")), "jobDescription", "Reporting")), token).status());
+        try (Connection c = db.open()) {
+            var usage = one(c, "SELECT * FROM jma_usage WHERE email=?", "candidate@example.com");
+            assertNotNull(usage);
+            assertEquals(0, usage.get("cv_generations_used"));
+        }
+    }
+    @Test void adminPasskeyAttemptsAreRateLimited() throws Exception {
+        for (int i = 0; i < 19; i++) assertEquals(401, request("GET", "/api/admin-users", null, "").status());
+        assertEquals(429, request("GET", "/api/admin-users", null, "").status());
+    }
+    @Test void validAdminRefreshesDoNotExhaustTheSignInLimit() throws Exception {
+        for (int i = 0; i < 25; i++) {
+            var response = client.send(HttpRequest.newBuilder(URI.create(base + "/api/admin-users"))
+                .header("X-Admin-Secret", ADMIN).GET().build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(200, response.statusCode());
+        }
+        assertEquals(200, request("POST", "/auth/v1/token", of("email", "candidate@example.com", "password", "test-password"), "").status());
+    }
+    @Test void providerDiagnosticsRequireAdminAndDoNotExposeSecrets() throws Exception {
+        assertEquals(401, request("POST", "/api/ai-diagnostics", of(), token).status());
+        var response = client.send(HttpRequest.newBuilder(URI.create(base + "/api/ai-diagnostics"))
+            .header("X-Admin-Secret", ADMIN).POST(HttpRequest.BodyPublishers.ofString("{}")).build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, response.statusCode());
+        assertEquals(5, map(object(response.body()).get("checks")).size());
+        assertFalse(response.body().contains(ADMIN));
+    }
+    @Test void adminCreationRequiresAUsablePasswordAndRoleChangesReachTheSession() throws Exception {
+        assertEquals(400, manage("createUser", of("email", "new@example.com")).status());
+        assertEquals(400, manage("createUser", of("email", "new@example.com", "password", "short")).status());
+        assertEquals(200, manage("createUser", of("email", "new@example.com", "password", "test-password", "name", "New User")).status());
+        assertEquals(200, manage("setRole", of("email", "candidate@example.com", "role", "admin")).status());
+        var plan = request("GET", "/api/current-user-plan", null, token).body();
+        assertEquals("admin", plan.get("role")); assertEquals("Unlimited", plan.get("daysRemaining"));
+        assertEquals(200, manage("setRole", of("email", "candidate@example.com", "role", "user")).status());
+        assertEquals("user", request("GET", "/api/current-user-plan", null, token).body().get("role"));
+    }
+    @Test void bulkAdminControlsUpdateAllAccountsAndUsage() throws Exception {
+        manage("createUser", of("email", "second@example.com", "password", "test-password"));
+        assertEquals(200, manage("setAllPlans", of("isPaid", true)).status());
+        assertEquals("lifetime", request("GET", "/api/current-user-plan", null, token).body().get("planType"));
+        assertEquals(200, manage("setAllPlans", of("isPaid", false)).status());
+        assertEquals("free", request("GET", "/api/current-user-plan", null, token).body().get("planType"));
+        manage("adjustUsage", of("email", "second@example.com", "field", "matches", "delta", 1));
+        assertEquals(200, manage("resetAllUsage", of()).status());
+        try (Connection c = db.open()) {
+            assertEquals(0, one(c, "SELECT matches_used FROM jma_usage WHERE email=?", "second@example.com").get("matches_used"));
+            assertEquals("free", Plans.type(object(str(app.accounts.find(c, "second@example.com", false), "metadata"))));
+        }
+    }
+    @Test void numericAdminAdjustmentsMustBeExactIntegers() throws Exception {
+        for (Object delta : List.of(1.9, "1.5", "NaN", true)) {
+            assertEquals(400, manage("adjustDaysRemaining", of("email", "candidate@example.com", "delta", delta)).status());
+            assertEquals(400, manage("adjustUsage", of("email", "candidate@example.com", "field", "cv", "delta", delta)).status());
+        }
+    }
+    @Test void refreshAndPasswordResetCannotLeaveAnOldSessionAlive() throws Exception {
+        var session = app.accounts.login(of("email", "candidate@example.com", "password", "test-password"));
+        try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
+            var gate = new CountDownLatch(1);
+            Future<Map<String, Object>> refreshed = pool.submit(() -> {
+                gate.await();
+                try { return app.accounts.refresh(str(session, "refresh_token")); }
+                catch (ApiException e) { assertEquals(401, e.status); return null; }
+            });
+            Future<?> reset = pool.submit(() -> {
+                gate.await();
+                app.admin.action(of("action", "changePassword", "payload", of("email", "candidate@example.com", "password", "reset-password")));
+                return null;
+            });
+            gate.countDown();
+            var result = refreshed.get(10, TimeUnit.SECONDS); reset.get(10, TimeUnit.SECONDS);
+            if (result != null) assertEquals(401, assertThrows(ApiException.class, () -> app.accounts.authenticate("Bearer " + str(result, "access_token"))).status);
+        }
+        try (Connection c = db.open()) { assertEquals(0L, one(c, "SELECT COUNT(*) AS total FROM jma_sessions").get("total")); }
+    }
+    @Test void staleAccountCannotUpdateAReplacementWithTheSameEmail() throws Exception {
+        Map<String, Object> stale;
+        try (Connection c = db.open()) { stale = app.accounts.find(c, "candidate@example.com", false); }
+        manage("deleteUser", of("email", "candidate@example.com"));
+        manage("createUser", of("email", "candidate@example.com", "name", "Replacement", "password", "replacement-password"));
+        assertEquals(401, assertThrows(ApiException.class, () -> app.accounts.update(stale, of("password", "attacker-password"))).status);
+        assertFalse(str(app.accounts.login(of("email", "candidate@example.com", "password", "replacement-password")), "access_token").isBlank());
+    }
+    @Test void adminUsageAdjustmentsRepairMissingRowsAndAuditSuccessfulChanges() throws Exception {
+        try (Connection c = db.open()) { execute(c, "DELETE FROM jma_usage WHERE email=?", "candidate@example.com"); }
+        assertEquals(200, manage("adjustUsage", of("email", "candidate@example.com", "field", "cv", "delta", 1)).status());
+        try (Connection c = db.open()) {
+            assertEquals(1, one(c, "SELECT cv_generations_used FROM jma_usage WHERE email=?", "candidate@example.com").get("cv_generations_used"));
+            assertEquals(1L, one(c, "SELECT COUNT(*) AS total FROM jma_audit_log").get("total"));
+        }
+        assertEquals(400, manage("adjustUsage", of("email", "candidate@example.com", "field", "email", "delta", 1)).status());
+        try (Connection c = db.open()) { assertEquals(1L, one(c, "SELECT COUNT(*) AS total FROM jma_audit_log").get("total")); }
+        assertEquals(200, manage("resetUsage", of("email", "candidate@example.com")).status());
+    }
+    @Test void otpAndReservationsMarkImportedAccountsAsLocallyModified() throws Exception {
+        seedOtp(true);
+        var session = request("POST", "/auth/v1/verify", of("email", "candidate@example.com", "token", "123456"), "").body();
+        try (Connection c = db.open()) {
+            var account = app.accounts.find(c, "candidate@example.com", false);
+            var metadata = object(str(account, "metadata"));
+            assertTrue(bool(metadata.get("_neon_modified")));
+            assertFalse(map(map(session.get("user")).get("user_metadata")).containsKey("_neon_modified"));
+            metadata.put("_neon_modified", false);
+            execute(c, "UPDATE jma_accounts SET metadata=? WHERE email=?", stringify(metadata), "candidate@example.com");
+        }
+        request("POST", "/api/generate-cv", of("data", of("name", "Candidate", "roles", List.of(of("title", "Data Analyst")), "jobDescription", "Reporting")), str(session, "access_token"));
+        try (Connection c = db.open()) {
+            assertTrue(bool(object(str(app.accounts.find(c, "candidate@example.com", false), "metadata")).get("_neon_modified")));
+        }
+    }
 }

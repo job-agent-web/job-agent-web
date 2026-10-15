@@ -279,16 +279,17 @@ function bindAuthContactAdminFallback(){
 }
 function paymentReferenceName(){return trim((gid("registerName")&&gid("registerName").value)||"");}
 function paymentReferenceEmail(){var email=trim((gid("signinEmail")&&gid("signinEmail").value)||"");if(!email){email=trim((gid("registerEmail")&&gid("registerEmail").value)||"");}if(!email&&authSession&&authSession.email){email=trim(authSession.email);}return email;}
-function buildMonthlyRevolutUrl(){var base="https://revolut.me/valourex?currency=GBP&amount=1000",parts=[],name=paymentReferenceName(),email=paymentReferenceEmail(),note="";if(name){parts.push(name);}if(email){parts.push(email);}note=parts.length?parts.join(" - "):"Please replace this text with your Job Match Agent Username and Email";return base+"&note="+encodeURIComponent(note);}
+function limitPaymentReference(note,name,email){note=trim(note);if(note.length<=64){return note;}return trim(email||name||"Job Match Agent").slice(0,64);}
+function buildMonthlyRevolutUrl(){var base="https://revolut.me/valourex?currency=GBP&amount=1000",parts=[],name=paymentReferenceName(),email=paymentReferenceEmail(),note="";if(name){parts.push(name);}if(email){parts.push(email);}note=parts.length?parts.join(" - "):"Job Match Agent: enter your username and email";return base+"&note="+encodeURIComponent(limitPaymentReference(note,name,email));}
 function openMonthlyRevolutPayment(){setPaymentStatus("good","Opening the 10 pounds Revolut payment link.");try{window.open(buildMonthlyRevolutUrl(),"_blank");}catch(e){window.location.href=buildMonthlyRevolutUrl();}}
-function buildSixMonthRevolutUrl(){var base="https://revolut.me/valourex?currency=GBP&amount=5000",parts=[],name=paymentReferenceName(),email=paymentReferenceEmail(),note="";if(name){parts.push(name);}if(email){parts.push(email);}note=parts.length?parts.join(" - "):"Please replace this text with your Job Match Agent Username and Email";return base+"&note="+encodeURIComponent(note);}
+function buildSixMonthRevolutUrl(){var base="https://revolut.me/valourex?currency=GBP&amount=5000",parts=[],name=paymentReferenceName(),email=paymentReferenceEmail(),note="";if(name){parts.push(name);}if(email){parts.push(email);}note=parts.length?parts.join(" - "):"Job Match Agent: enter your username and email";return base+"&note="+encodeURIComponent(limitPaymentReference(note,name,email));}
 function openSixMonthRevolutPayment(){setPaymentStatus("good","Opening the 50 pounds Revolut payment link.");try{window.open(buildSixMonthRevolutUrl(),"_blank");}catch(e){window.location.href=buildSixMonthRevolutUrl();}}
-function buildYearlyRevolutUrl(){var base="https://revolut.me/valourex?currency=GBP&amount=10000",parts=[],name=paymentReferenceName(),email=paymentReferenceEmail(),note="";if(name){parts.push(name);}if(email){parts.push(email);}note=parts.length?parts.join(" - "):"Please replace this text with your Job Match Agent Username and Email";return base+"&note="+encodeURIComponent(note);}
+function buildYearlyRevolutUrl(){var base="https://revolut.me/valourex?currency=GBP&amount=10000",parts=[],name=paymentReferenceName(),email=paymentReferenceEmail(),note="";if(name){parts.push(name);}if(email){parts.push(email);}note=parts.length?parts.join(" - "):"Job Match Agent: enter your username and email";return base+"&note="+encodeURIComponent(limitPaymentReference(note,name,email));}
 function openYearlyRevolutPayment(){setPaymentStatus("good","Opening the 100 pounds Revolut payment link.");try{window.open(buildYearlyRevolutUrl(),"_blank");}catch(e){window.location.href=buildYearlyRevolutUrl();}}
-function buildLifetimeRevolutUrl(){var base="https://revolut.me/valourex?currency=GBP&amount=20000",parts=[],name=paymentReferenceName(),email=paymentReferenceEmail(),note="";if(name){parts.push(name);}if(email){parts.push(email);}note=parts.length?parts.join(" - "):"Please replace this text with your Job Match Agent Username and Email";return base+"&note="+encodeURIComponent(note);}
+function buildLifetimeRevolutUrl(){var base="https://revolut.me/valourex?currency=GBP&amount=20000",parts=[],name=paymentReferenceName(),email=paymentReferenceEmail(),note="";if(name){parts.push(name);}if(email){parts.push(email);}note=parts.length?parts.join(" - "):"Job Match Agent: enter your username and email";return base+"&note="+encodeURIComponent(limitPaymentReference(note,name,email));}
 function openLifetimeRevolutPayment(){setPaymentStatus("good","Opening the 200 pounds Revolut payment link.");try{window.open(buildLifetimeRevolutUrl(),"_blank");}catch(e){window.location.href=buildLifetimeRevolutUrl();}}
-function queuePendingSignupRecord(record){var queue=loadJson(pendingSignupLogsKey,[]);queue.push(record);saveJson(pendingSignupLogsKey,queue);}
-function logSignupRecord(name,email,password,createdAt){queuePendingSignupRecord({name:name,email:email,password:password,createdAt:createdAt});}
+function queuePendingSignupRecord(record){var queue=loadJson(pendingSignupLogsKey,[]);queue=Array.isArray(queue)?queue:[];queue.push(record);saveJson(pendingSignupLogsKey,queue.map(function(item){return {name:item.name,email:item.email,createdAt:item.createdAt};}));}
+function logSignupRecord(name,email,password,createdAt){queuePendingSignupRecord({name:name,email:email,createdAt:createdAt});}
 function showMode(mode){
   currentMode=mode||"";
   if(registerForm){registerForm.hidden=mode!=="register";registerForm.style.display=mode==="register"?"grid":"none";}
@@ -313,7 +314,7 @@ function saveUsageIfMissing(email){if(!usageState[low(email)]){usageState[low(em
 function isEmailLike(email){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email||""));}
 function normalizeRole(role){role=low(role);if(role==="admin"||role==="super_admin"){return role;}return "user";}
 function normalizeAuthPlanType(value){return trim(String(value||"").replace(/[_-]+/g," ").replace(/\s+/g," "));}
-function setPendingOtp(record){pendingOtp=record;saveJson(pendingOtpKey,record);}
+function setPendingOtp(record){pendingOtp=record;saveJson(pendingOtpKey,{flow:record.flow,name:record.name,email:record.email,createdAt:record.createdAt,sentAt:record.sentAt});}
 function otpResendRemainingSeconds(){var sentAt=pendingOtp&&pendingOtp.sentAt?new Date(pendingOtp.sentAt):null,remaining=0;if(!sentAt||!isFinite(sentAt.getTime())){return 0;}remaining=Math.ceil((60000-((new Date()).getTime()-sentAt.getTime()))/1000);return remaining>0?remaining:0;}
 function stopResendOtpTimer(){if(resendOtpTimer){window.clearInterval(resendOtpTimer);resendOtpTimer=null;}}
 function updateResendOtpButton(){var remaining=otpResendRemainingSeconds(),show=!!(resendOtpBtn&&pendingOtp&&pendingOtp.flow==="signup");if(!resendOtpBtn){return;}resendOtpBtn.hidden=!show;if(!show){resendOtpBtn.disabled=true;resendOtpBtn.innerHTML="Resend OTP in 60s";return;}if(remaining>0){resendOtpBtn.disabled=true;resendOtpBtn.innerHTML="Resend OTP in "+remaining+"s";return;}resendOtpBtn.disabled=false;resendOtpBtn.innerHTML="Resend OTP";}
@@ -343,6 +344,9 @@ function syncSessionFromUser(user){
   removeJson(authSessionKey);
 }
 function bootAuth(){
+  var signupLogs=loadJson(pendingSignupLogsKey,[]);
+  if(Array.isArray(signupLogs)&&signupLogs.length){saveJson(pendingSignupLogsKey,signupLogs.map(function(item){return {name:item.name,email:item.email,createdAt:item.createdAt};}));}
+  if(pendingOtp){setPendingOtp(pendingOtp);}
   if(!supabaseClient){setStatus("bad","Supabase could not be loaded on this page yet.");return;}
   if(signOutParam==="1"){
     supabaseClient.auth.signOut({scope:"local"}).then(function(){}).catch(function(){});
@@ -376,8 +380,16 @@ function bootAuth(){
       setStatus("warn","Your free hosted matches have been used. Sign in and unlock premium to continue.");
       showMode("signin");
     } else if(pendingOtp){
-      setStatus("neutral",getPendingOtpLabel());
-      showMode("otp");
+      if(!pendingOtp.password){
+        var reset=pendingOtp.flow==="reset";
+        if(gid(reset?"resetEmail":"registerEmail")){gid(reset?"resetEmail":"registerEmail").value=pendingOtp.email||"";}
+        if(!reset&&gid("registerName")){gid("registerName").value=pendingOtp.name||"";}
+        showMode(reset?"reset":"register");
+        setStatus("neutral","For your security, re-enter your password and request a new OTP to continue.");
+      }else{
+        setStatus("neutral",getPendingOtpLabel());
+        showMode("otp");
+      }
     } else {
       setStatus("neutral","Sign in to continue to the main platform.");
       showMode("signin");
@@ -439,6 +451,7 @@ function requestPasswordResetOtp(){
 function verifyOtp(){
   var code=trim(gid("otpCode")&&gid("otpCode").value);
   if(!pendingOtp||!pendingOtp.email){setStatus("bad","Start with sign up or forgot password so we can send you an OTP.");showMode("register");return;}
+  if(!pendingOtp.password){setStatus("bad","Re-enter your password and request a new OTP to continue.");showMode(pendingOtp.flow==="reset"?"reset":"register");return;}
   if(!/^\d{6}$/.test(code)){setStatus("bad","Enter the 6-digit OTP sent to your email.");return;}
   setStatus("neutral","Verifying your OTP...");
   supabaseClient.auth.verifyOtp({email:pendingOtp.email,token:code,type:"email"}).then(function(result){

@@ -113,6 +113,7 @@
         usage.locked_panes = locked.slice(0);
         usage.unlockedPanes = unlocked.slice(0);
         usage.unlocked_panes = unlocked.slice(0);
+        if (payload.role) usage.role = safeTrim(payload.role);
         window.setUserUsage(email, usage);
       }
     } catch (usageError) {}
@@ -122,6 +123,7 @@
         window.authState.session.locked_panes = locked.slice(0);
         window.authState.session.unlockedPanes = unlocked.slice(0);
         window.authState.session.unlocked_panes = unlocked.slice(0);
+        if (payload.role) window.authState.session.role = safeTrim(payload.role);
         if (typeof window.persistAuthSession === "function") {
           window.persistAuthSession();
         }
@@ -133,6 +135,7 @@
             window.authState.users[i].locked_panes = locked.slice(0);
             window.authState.users[i].unlockedPanes = unlocked.slice(0);
             window.authState.users[i].unlocked_panes = unlocked.slice(0);
+            if (payload.role) window.authState.users[i].role = safeTrim(payload.role);
             if (typeof window.persistAuthUsers === "function") {
               window.persistAuthUsers();
             }

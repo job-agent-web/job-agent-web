@@ -49,4 +49,25 @@ class PlansTest {
         Plans.adjust(metadata, NOW.toString(), -1, NOW);
         assertEquals(31, Plans.remaining(metadata, NOW.toString(), NOW));
     }
+    @Test void importedCamelCasePaneOverridesAreEnforcedAndReported() {
+        var metadata = of("planType", "monthly", "subscriptionStartedAt", Instant.now().toString(),
+            "lockedPanes", List.of("pane2"), "unlockedPanes", List.of("pane9"),
+            "weeklyFreeDayClaimedAt", NOW.toString(), "weeklyClaimPlanType", "monthly");
+        assertFalse(Plans.allowed(metadata, NOW.toString(), "pane2", NOW));
+        assertTrue(Plans.allowed(metadata, NOW.toString(), "pane9", NOW));
+        var snapshot = Plans.snapshot(of("metadata", stringify(metadata), "created_at", NOW.toString()));
+        assertEquals(List.of("pane2"), snapshot.get("lockedPanes"));
+        assertEquals(List.of("pane9"), snapshot.get("unlockedPanes"));
+        assertEquals(NOW.toString(), snapshot.get("weeklyFreeDayClaimedAt"));
+        assertEquals("monthly", snapshot.get("weeklyClaimPlanType"));
+        metadata.put("locked_panes", List.of());
+        assertTrue(Plans.allowed(metadata, NOW.toString(), "pane2", NOW));
+    }
+    @Test void invalidPaneNamesFailClosedEvenForAdmins() {
+        for (String role : List.of("user", "admin")) {
+            var metadata = of("role", role); Plans.set(metadata, "lifetime", NOW);
+            assertFalse(Plans.allowed(metadata, NOW.toString(), "pane10", NOW));
+            assertFalse(Plans.allowed(metadata, NOW.toString(), "", NOW));
+        }
+    }
 }

@@ -33,6 +33,8 @@ try {
   if ($Action -eq 'Build') {
     & node (Join-Path $serviceRoot 'scripts\test-browser-bridge.cjs')
     if ($LASTEXITCODE -ne 0) { throw 'Browser API bridge checks failed.' }
+    & node (Join-Path $serviceRoot 'scripts\test-frontend-workflows.cjs')
+    if ($LASTEXITCODE -ne 0) { throw 'Frontend workflow checks failed.' }
     # Use the Windows trust store for the portable JDK on this machine.
     if ($IsWindows -or $env:OS -eq 'Windows_NT') { $env:MAVEN_OPTS = "$env:MAVEN_OPTS -Djavax.net.ssl.trustStoreType=Windows-ROOT -Djavax.net.ssl.trustStore=NONE" }
     & $mavenExecutable -B verify
