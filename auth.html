@@ -4,26 +4,41 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#11203b">
   <title>Job Match Agent Access</title>
-  <link rel="stylesheet" href="./styles.css?v=20260514darkpanes01">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css?v=20260712appdownload01">
+  <link rel="stylesheet" href="./premium.css?v=20261015premium01">
 </head>
 <body class="auth-page">
+  <header class="premium-topbar"><a class="premium-brand" href="./index.html" aria-label="Job Match Agent home"><span class="premium-monogram" aria-hidden="true">JM</span><span><strong>Job Match Agent</strong><small>YOUR CAREER WORKSPACE</small></span></a><nav aria-label="Main navigation"><a href="#platformFunctions">Explore tools</a><a href="#availablePlans">Plans</a><a href="#accessCard" class="premium-nav-action">Your account</a></nav></header>
   <div class="page-shell auth-page-shell">
     <section class="auth-shell">
-      <article class="auth-card">
-        <p class="card-label">Hosted Access</p>
-        <h1 class="auth-title">Create an account or sign in</h1>
-        <p class="hero-text auth-copy">
-          Access the hosted Job Match Agent here first. New users get 5 free job matches before upgrading.
-        </p>
+      <aside class="welcome-story"><span class="premium-eyebrow">A more confident next step</span><h2>Your experience.<br>Your ambition.<br><em>Your next opportunity.</em></h2><p>Turn what you have achieved into an application that moves you forward. Your CV, cover letters and career tools, together in one workspace.</p><div class="welcome-document" aria-hidden="true"><small>YOUR PROFESSIONAL STORY</small><strong>Made for your next chapter.</strong><i></i><i></i><i></i><span>CV &amp; cover letter workspace</span></div><div class="welcome-steps"><span><b>01</b>Build your story</span><span><b>02</b>Find your role</span><span><b>03</b>Prepare to shine</span></div></aside>
+      <article class="auth-card access-card" id="accessCard">
+        <p class="card-label">YOUR NEXT CHAPTER STARTS HERE</p>
+        <h1 class="auth-title">Welcome to your workspace</h1><p class="access-intro">Sign in to continue, or create your account to get started.</p>
+        <section class="app-download-panel" aria-label="Install Job Match Agent" hidden>
+          <div>
+            <span>Download app</span>
+            <strong>Install Job Match Agent on your device</strong>
+          </div>
+          <div class="app-download-links">
+            <a class="app-download-link" href="./index.html" data-install-platform="pc">PC</a>
+            <a class="app-download-link" href="./index.html" data-install-platform="ios">iOS</a>
+            <a class="app-download-link" href="./index.html" data-install-platform="android">Android</a>
+          </div>
+          <p class="app-download-status" data-install-status>Choose your device to install the platform as an app.</p>
+        </section>
         <div class="auth-tabs">
-          <button id="showRegisterBtn" class="primary-button small-button" type="button">Register</button>
+          <button id="showRegisterBtn" class="primary-button small-button" type="button">Sign Up</button>
           <button id="showSigninBtn" class="ghost-button small-button" type="button">Sign In</button>
         </div>
-        <form id="registerForm" class="auth-form">
+        <form id="registerForm" class="auth-form" hidden>
           <label>
-            Full name
-            <input id="registerName" type="text" placeholder="Valentine Imasuen">
+            User name
+            <input id="registerName" type="text" placeholder="">
           </label>
           <label>
             Email
@@ -33,27 +48,63 @@
             Password
             <input id="registerPassword" type="password" placeholder="Create a password">
           </label>
-          <button class="primary-button" type="submit">Create account</button>
+          <label>
+            Re-enter password
+            <input id="registerPasswordConfirm" type="password" placeholder="Re-enter your password">
+          </label>
+          <button class="primary-button" type="submit">Sign Up</button>
+        </form>
+        <form id="otpForm" class="auth-form" hidden>
+          <label>
+            Enter OTP
+            <input id="otpCode" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit code">
+          </label>
+          <div class="otp-actions">
+            <button id="resendOtpBtn" class="ghost-button" type="button">Resend OTP in 60s</button>
+          </div>
+          <div class="otp-actions">
+            <button id="verifyOtpBtn" class="primary-button" type="submit">Verify OTP</button>
+            <button id="cancelOtpBtn" class="ghost-button" type="button">Cancel</button>
+          </div>
         </form>
         <form id="signinForm" class="auth-form" hidden>
           <label>
-            Email
-            <input id="signinEmail" type="email" placeholder="name@example.com">
+            Email or username
+            <input id="signinEmail" type="text" placeholder="name@example.com or username">
           </label>
           <label>
             Password
             <input id="signinPassword" type="password" placeholder="Enter your password">
           </label>
+          <label class="auth-check">
+            <input id="keepSignedIn" type="checkbox">
+            <span>Keep me signed in</span>
+          </label>
           <button class="primary-button" type="submit">Sign in</button>
+          <button id="showForgotPasswordBtn" class="ghost-button" type="button">Forgot password</button>
         </form>
-        <div id="authStatus" class="auth-status neutral">Register or sign in to continue to the main platform.</div>
+        <form id="resetRequestForm" class="auth-form" hidden>
+          <label>
+            Email
+            <input id="resetEmail" type="email" placeholder="name@example.com">
+          </label>
+          <label>
+            New password
+            <input id="resetPassword" type="password" placeholder="Enter a new password">
+          </label>
+          <div class="otp-actions">
+            <button id="sendResetOtpBtn" class="primary-button" type="submit">Send Reset OTP</button>
+            <button id="cancelResetBtn" class="ghost-button" type="button">Cancel</button>
+          </div>
+        </form>
+        <div id="authStatus" class="auth-status neutral">Choose sign up or sign in to continue to the main platform.</div>
       </article>
 
-      <article class="auth-card platform-functions-card">
+      <article class="auth-card platform-functions-card" id="platformFunctions">
         <p class="card-label">Platform functions</p>
-        <h2>What the platform helps users do</h2>
+        <h2>Everything for your next move</h2>
         <p class="helper-text auth-copy">
-          These are the same panes users unlock and use inside Job Match Agent.
+          From a stronger application to your next interview. Explore the tools in your workspace.
         </p>
         <div class="platform-functions-grid" aria-label="Platform functions">
           <div class="platform-function-pill"><span>1</span><div><strong>Generate CV</strong><small>Build a job-specific CV from the user's experience and target role.</small></div></div>
@@ -68,44 +119,93 @@
         </div>
       </article>
 
-      <article class="auth-card paywall-card">
+      <article class="auth-card paywall-card" id="availablePlans">
         <p class="card-label">Pricing</p>
-        <h2>Free trial, then upgrade</h2>
+        <h2>Available plans</h2>
         <p class="helper-text auth-copy">
-          After 5 successful job matches, the hosted website will ask the user to move to a paid plan.
+          Every new user receives 1 week of free access to the platform before choosing a paid plan.
         </p>
         <div class="pricing-grid">
-          <article class="pricing-card">
+          <article id="authMonthlyPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 10 pounds with Revolut">
             <h3>Monthly</h3>
-            <p class="price-tag">GBP 9.99<span>/month</span></p>
-            <p>Flexible access while actively applying for jobs.</p>
+            <p class="price-tag">£10<span> monthly</span></p>
           </article>
-          <article class="pricing-card">
+          <article id="authSixMonthPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 50 pounds with Revolut">
             <h3>6 Months</h3>
-            <p class="price-tag">GBP 50<span> 6 months</span></p>
-            <p>Longer access for active applications.</p>
+            <p class="price-tag">£50<span> 6 months</span></p>
             <p class="helper-text">Get 1 week free</p>
           </article>
-          <article class="pricing-card featured">
+          <article id="authYearlyPaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 100 pounds with Revolut">
             <h3>Yearly</h3>
-            <p class="price-tag">GBP 100<span> yearly</span></p>
-            <p>Better value for long-term use.</p>
+            <p class="price-tag">£100<span> yearly</span></p>
             <p class="helper-text">Get one month free</p>
           </article>
-          <article class="pricing-card featured">
-            <h3>Lifetime</h3>
-            <p class="price-tag">GBP 39<span> one-off</span></p>
-            <p>One account, permanent hosted access.</p>
+          <article id="authLifetimePaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 200 pounds with Revolut">
+            <h3>Premium Access (Lifetime)</h3>
+            <p class="price-tag">£200<span> one-off</span></p>
           </article>
         </div>
-        <div class="paywall-actions">
-          <button id="unlockPremiumBtn" class="primary-button" type="button">Unlock Premium Demo</button>
-        </div>
-        <div id="paymentStatus" class="auth-status neutral">Upgrade can be enabled here for hosted-site testing.</div>
+        <p class="helper-text">After payment, please allow a few minutes to update plan.</p>
       </article>
     </section>
   </div>
+  <button id="authContactUsFab" class="contact-us-fab" type="button">Contact Us</button>
+  <div id="authContactAdminModal" class="limit-modal" hidden>
+    <div class="limit-modal-card contact-us-card">
+      <p class="card-label">Contact Us</p>
+      <h3>Send a Message</h3>
+      <div class="manual-grid contact-us-grid">
+        <label>
+          User name
+          <input id="authContactUserName" type="text" placeholder="Your name">
+        </label>
+        <label>
+          Email
+          <input id="authContactUserEmail" type="email" placeholder="name@example.com">
+        </label>
+        <label class="full-span">
+          Subject
+          <input id="authContactSubject" type="text" placeholder="How can we help?">
+        </label>
+        <label class="full-span">
+          Message
+          <textarea id="authContactMessage" rows="7" placeholder="Type your message here."></textarea>
+        </label>
+      </div>
+      <div class="letter-controls">
+        <button id="sendAuthContactMessageBtn" class="primary-button" type="button">Send Message</button>
+        <button id="closeAuthContactAdminBtn" class="ghost-button" type="button">Close</button>
+      </div>
+      <div id="authContactStatus" class="auth-status neutral">We will prefill your details where available before sending your message.</div>
+    </div>
+  </div>
 
-  <script src="./auth.js?v=20260407authpage"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./auth.js?v=20260417authsync07"></script>
+  <script src="./app-install.js?v=20260712appdownload01"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

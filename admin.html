@@ -6,8 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Job Match Agent Admin</title>
   <link rel="stylesheet" href="./styles.css?v=20260714noapply01">
+  <link rel="stylesheet" href="./premium.css?v=20261015premium01">
 </head>
 <body class="auth-page admin-page">
+  <header class="premium-topbar"><a class="premium-brand" href="./index.html" aria-label="Job Match Agent home"><span class="premium-monogram" aria-hidden="true">JM</span><span><strong>Job Match Agent</strong><small>YOUR CAREER WORKSPACE</small></span></a><nav aria-label="Main navigation"><a href="./app.html" class="premium-nav-action">Open workspace</a></nav></header>
   <div class="page-shell auth-page-shell">
     <section class="auth-shell">
       <article class="auth-card" id="adminAccessCard">
@@ -23,9 +25,43 @@
         <div id="adminStatus" class="auth-status neutral">Enter the admin passkey.</div>
       </article>
 
+      <article class="auth-card" id="adminPanel" hidden>
+        <div class="section-title">
+          <h2>Users</h2>
+          <div class="letter-controls">
+            <button id="exportAdminBtn" class="ghost-button" type="button">Download Excel</button>
+            <button id="refreshAdminBtn" class="ghost-button" type="button">Refresh</button>
+            <button id="signOutAdminBtn" class="ghost-button" type="button">Log out</button>
+          </div>
+        </div>
+        <label>
+          Search users
+          <input id="adminSearchInput" type="text" placeholder="Search by user name or email">
+        </label>
+        <div id="adminSummary" class="summary-bar empty-state">No user data loaded yet.</div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Signed up</th>
+                <th>Last sign in</th>
+                <th>Subscription</th>
+                <th>Days remaining</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody">
+              <tr><td colspan="7">Load the monitor to see users here.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
       <article class="auth-card" id="adminToolsPanel" hidden>
         <div class="section-title">
-          <h2>Super admin tools</h2>
+          <h2>Account management</h2>
         </div>
         <p class="helper-text auth-copy">
           Create hosted users, delete users, grant extra usage above the default limits, reset allowances, and switch plan access.
@@ -61,11 +97,9 @@
       </article>
 
       <article class="auth-card" id="adminAiModelPanel" hidden>
-        <div class="section-title">
-          <h2>AI Model Indicator</h2>
-        </div>
+        <details class="premium-diagnostics"><summary>AI model routing <span>View provider details</span></summary>
         <p class="helper-text auth-copy">
-          This shows the AI route currently configured in the platform code. Netlify environment variables are private, so the displayed Gemini model is the code default unless GEMINI_MODEL is changed in Netlify.
+          Provider routing for each tool. Actual availability depends on the configured Vercel credentials and provider quotas.
         </p>
         <div class="admin-table-wrap ai-model-indicator-wrap">
           <table class="admin-table ai-model-indicator-table">
@@ -81,6 +115,7 @@
             </tbody>
           </table>
         </div>
+      </details>
       </article>
       <article class="auth-card collapsed-panel" id="adminGeneratorPanel" hidden>
         <button id="adminGeneratorToggleBtn" class="section-toggle" type="button" aria-expanded="false">
@@ -140,39 +175,7 @@
         </div>
       </article>
 
-      <article class="auth-card" id="adminPanel" hidden>
-        <div class="section-title">
-          <h2>Users</h2>
-          <div class="letter-controls">
-            <button id="exportAdminBtn" class="ghost-button" type="button">Download Excel</button>
-            <button id="refreshAdminBtn" class="ghost-button" type="button">Refresh</button>
-            <button id="signOutAdminBtn" class="ghost-button" type="button">Log out</button>
-          </div>
-        </div>
-        <label>
-          Search users
-          <input id="adminSearchInput" type="text" placeholder="Search by user name or email">
-        </label>
-        <div id="adminSummary" class="summary-bar empty-state">No user data loaded yet.</div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Email</th>
-                <th>Signed up</th>
-                <th>Last sign in</th>
-                <th>Subscription</th>
-                <th>Days remaining</th>
-                <th>Role</th>
-              </tr>
-            </thead>
-            <tbody id="adminTableBody">
-              <tr><td colspan="7">Load the monitor to see users here.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </article>
+
     </section>
   </div>
 

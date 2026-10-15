@@ -677,8 +677,10 @@
       };
     })();
   </script>
+  <link rel="stylesheet" href="./premium.css?v=20261015premium01">
 </head>
 <body>
+  <header class="premium-topbar"><a class="premium-brand" href="./index.html" aria-label="Job Match Agent home"><span class="premium-monogram" aria-hidden="true">JM</span><span><strong>Job Match Agent</strong><small>YOUR CAREER WORKSPACE</small></span></a><nav aria-label="Main navigation"><a href="#workspaceTools">Career tools</a><a href="#heroSearch" class="premium-nav-action">Find opportunities</a></nav></header>
   <div class="page-shell">
     <div id="modeBanner" class="mode-banner">Checking app mode...</div>
     <header class="hero">
@@ -687,13 +689,13 @@
           <button id="themeToggleBtn" class="theme-toggle-button" type="button" aria-pressed="false">Dark Mode</button>
           <button id="choosePlanBtn" class="ghost-button small-button" type="button" onclick="(function(){var modal=document.getElementById('limitModal');var title=document.getElementById('limitModalTitle');var text=document.getElementById('limitModalText');var status=document.getElementById('limitModalStatus');if(title){title.innerHTML='Choose a plan';}if(text){text.innerHTML='Choose the plan you want to use. Click the 10 pounds monthly card to pay with Revolut.';}if(status){status.className='auth-status neutral';status.innerHTML='Choose a monthly, 6-month, yearly, or lifetime plan.';}if(modal){modal.hidden=false;modal.removeAttribute('hidden');modal.style.display='grid';}if(window.jobMatchOpenPlanChooser){window.jobMatchOpenPlanChooser();}})();return false;">Choose Plan</button>
         </div>
-        <h1>Job Match Agent</h1>
+        <p class="card-label">YOUR CAREER WORKSPACE</p><h1>Make your next move<br>your strongest.</h1>
         <p class="hero-text">
-          Generate a job-specific CV, then build a premium cover letter from your CV details and the exact job description you want to apply for.
+          Create a tailored CV, craft your cover letter, and prepare for the opportunities ahead. Start with a tool below.
         </p>
         <div id="scraperRunStatus" class="sponsor-status neutral" hidden></div>
       </div>
-      <div class="hero-card hero-search-card">
+      <div class="hero-card hero-search-card" id="heroSearch">
         <p class="card-label">Platform Search</p>
         <div class="account-bar">
           <div id="accountSummary" class="account-summary">Checking sign-in...</div>
@@ -725,6 +727,7 @@
       </div>
     </header>
 
+    <div class="workspace-caption" id="workspaceTools"><h2>Your career toolkit</h2><p>Nine focused tools. One place to move forward.</p></div>
     <main class="layout">
       <section class="panel cv-builder-panel collapsed-panel" id="cvBuilderPanel">
         <button id="cvBuilderToggleBtn" class="section-toggle" type="button" aria-expanded="false" aria-controls="cvBuilderPanelBody">

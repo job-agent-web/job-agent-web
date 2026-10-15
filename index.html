@@ -9,13 +9,16 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css?v=20260712appdownload01">
+  <link rel="stylesheet" href="./premium.css?v=20261015premium01">
 </head>
 <body class="auth-page">
+  <header class="premium-topbar"><a class="premium-brand" href="./index.html" aria-label="Job Match Agent home"><span class="premium-monogram" aria-hidden="true">JM</span><span><strong>Job Match Agent</strong><small>YOUR CAREER WORKSPACE</small></span></a><nav aria-label="Main navigation"><a href="#platformFunctions">Explore tools</a><a href="#availablePlans">Plans</a><a href="#accessCard" class="premium-nav-action">Your account</a></nav></header>
   <div class="page-shell auth-page-shell">
     <section class="auth-shell">
-      <article class="auth-card">
-        <p class="card-label">Hosted Access</p>
-        <h1 class="auth-title">Sign up or sign in</h1>
+      <aside class="welcome-story"><span class="premium-eyebrow">A more confident next step</span><h2>Your experience.<br>Your ambition.<br><em>Your next opportunity.</em></h2><p>Turn what you have achieved into an application that moves you forward. Your CV, cover letters and career tools, together in one workspace.</p><div class="welcome-document" aria-hidden="true"><small>YOUR PROFESSIONAL STORY</small><strong>Made for your next chapter.</strong><i></i><i></i><i></i><span>CV &amp; cover letter workspace</span></div><div class="welcome-steps"><span><b>01</b>Build your story</span><span><b>02</b>Find your role</span><span><b>03</b>Prepare to shine</span></div></aside>
+      <article class="auth-card access-card" id="accessCard">
+        <p class="card-label">YOUR NEXT CHAPTER STARTS HERE</p>
+        <h1 class="auth-title">Welcome to your workspace</h1><p class="access-intro">Sign in to continue, or create your account to get started.</p>
         <section class="app-download-panel" aria-label="Install Job Match Agent" hidden>
           <div>
             <span>Download app</span>
@@ -97,11 +100,11 @@
         <div id="authStatus" class="auth-status neutral">Choose sign up or sign in to continue to the main platform.</div>
       </article>
 
-      <article class="auth-card platform-functions-card">
+      <article class="auth-card platform-functions-card" id="platformFunctions">
         <p class="card-label">Platform functions</p>
-        <h2>What the platform helps users do</h2>
+        <h2>Everything for your next move</h2>
         <p class="helper-text auth-copy">
-          These are the same panes users unlock and use inside Job Match Agent.
+          From a stronger application to your next interview. Explore the tools in your workspace.
         </p>
         <div class="platform-functions-grid" aria-label="Platform functions">
           <div class="platform-function-pill"><span>1</span><div><strong>Generate CV</strong><small>Build a job-specific CV from the user's experience and target role.</small></div></div>
@@ -116,7 +119,7 @@
         </div>
       </article>
 
-      <article class="auth-card paywall-card">
+      <article class="auth-card paywall-card" id="availablePlans">
         <p class="card-label">Pricing</p>
         <h2>Available plans</h2>
         <p class="helper-text auth-copy">
