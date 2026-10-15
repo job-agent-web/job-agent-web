@@ -26,6 +26,13 @@ async function run() {
   assert.deepEqual(Array.from(context.atsWords('Data Analyst Excel Power BI SQL Validate')), ['data','analyst','excel','power','sql','validate']);
   assert.equal(context.clampScore(0), 0);
   assert.equal(context.normalizeCvScoreResult({score:0,verdict:'No match'}, {cvText:cv,jobTitle:'Data Analyst'}).score, 0);
+  const planFunctions={getCurrentHostedUser:context.getCurrentHostedUser,getCurrentHostedUserRole:context.getCurrentHostedUserRole,currentDaysState:context.currentDaysState,getCurrentUserPlanType:context.getCurrentUserPlanType};
+  context.getCurrentHostedUser=()=>({email:'alex@example.com'});context.getCurrentHostedUserRole=()=> 'user';
+  context.currentDaysState=()=>({expired:false,days:31});context.getCurrentUserPlanType=()=> 'monthly';
+  assert.equal(context.hasSixMonthPlusAccess(),false,'A monthly account with a bonus day must remain restricted');
+  context.currentDaysState=()=>({expired:false,days:1});context.getCurrentUserPlanType=()=> 'six month';
+  assert.equal(context.hasSixMonthPlusAccess(),true,'A six-month account keeps its entitlements until expiry');
+  Object.assign(context,planFunctions);
   assert.equal(context.limitPaymentReference('Very long name '.repeat(10), 'Very long name '.repeat(10), 'alex@example.com'), 'alex@example.com');
   context.getCurrentHostedUser=()=>({name:'Name '.repeat(30),email:'alex@example.com'});
   for(const [name,amount] of [['buildMonthlyRevolutUrl','1000'],['buildSixMonthRevolutUrl','5000'],['buildYearlyRevolutUrl','10000'],['buildLifetimeRevolutUrl','20000']]){
