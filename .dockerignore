@@ -1,0 +1,12 @@
+.git
+.vercel
+.env*
+**/.env*
+**/target
+**/node_modules
+*.zip
+*.docx
+*.log
+sponsor_website_directory.json
+api
+netlify

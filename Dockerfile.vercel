@@ -1,0 +1,24 @@
+FROM node:24-alpine AS frontend
+WORKDIR /source
+COPY index.html auth.html auth.js app.html app.js styles.css admin.html admin-local.html admin.js cv-generator.js ai-session-memory.js assistant-ai.js career-path-library.js hosted-account-sync.js uk_sponsors.js sponsor_websites.js sponsor_websites.json app-icon.svg app-install.js manifest.webmanifest sw.js ./
+COPY java-service/public/ ./java-service/public/
+COPY java-service/scripts/public-assets.mjs ./java-service/scripts/public-assets.mjs
+RUN node --input-type=module -e "import {preparePublic} from './java-service/scripts/public-assets.mjs'; preparePublic('/source', '/public');"
+
+FROM maven:3.9.11-eclipse-temurin-21 AS build
+WORKDIR /build
+COPY java-service/pom.xml ./pom.xml
+RUN mvn -B -q dependency:go-offline
+COPY java-service/src ./src
+RUN mvn -B -q verify
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=build /build/target/jobmatchagent.jar /app/jobmatchagent.jar
+COPY --from=frontend /public/ /app/public/
+USER app
+ENV PORT=8080
+ENV PUBLIC_DIR=/app/public
+EXPOSE 8080
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/jobmatchagent.jar"]

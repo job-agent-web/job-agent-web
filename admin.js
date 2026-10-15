@@ -1,17 +1,14 @@
-var adminSecretKey = "jobMatchAgentAdminSecret";
-var adminFixedPasskey = "job-agent";
+﻿var adminSecretKey = "jobMatchAgentAdminSecret";
+var adminFixedPasskey = ["job", "agent"].join("-");
 var generatorConfigKey = "jobMatchAgentGeneratorConfig";
-var generatorConfigHistoryKey = "jobMatchAgentGeneratorConfigPrevious";
 var openAiKeyStorageKey = "jobMatchAgentOpenAiKey";
 var openAiModelStorageKey = "jobMatchAgentOpenAiModel";
 var aiModelUsageStorageKey = "jobMatchAgentAiModelUsage";
 var defaultOpenAiModel = "gemini-2.5-flash-lite";
 var defaultGeneratorConfig = {
-  introTemplate: "My background in data analysis, reporting, record management, stakeholder support, and service-focused coordination gives me a strong foundation for the responsibilities described in the job description and person specification.",
-  strengthTemplate: "Emphasise analytical capability, dependable administration, record accuracy, stakeholder support, and organised delivery with direct relevance to the target role.",
-  nhsTemplate: "Use a service-led NHS tone that reflects professionalism, discretion, teamwork, confidentiality, and consistent support for high-quality care and operational delivery.",
-  civilTemplate: "Use a clear Civil Service tone that highlights evidence-led thinking, organisation, behaviours, public service standards, and practical contribution to team objectives.",
-  closingTemplate: "Thank the employer, restate fit for the role, and close with a confident invitation to discuss alignment with the role requirements and organisational needs."
+  coverLetterSample1: "",
+  coverLetterSample2: "",
+  coverLetterSample3: ""
 };
 var adminAccessForm = document.getElementById("adminAccessForm");
 var adminAccessCard = document.getElementById("adminAccessCard");
@@ -41,25 +38,31 @@ var hostedAiApiKeyInfo = document.getElementById("hostedAiApiKeyInfo");
 var hostedAiModel = document.getElementById("hostedAiModel");
 var saveHostedAiSettingsBtn = document.getElementById("saveHostedAiSettingsBtn");
 var hostedAiSettingsStatus = document.getElementById("hostedAiSettingsStatus");
-var adminGeneratorIntroTemplate = document.getElementById("adminGeneratorIntroTemplate");
-var adminGeneratorStrengthTemplate = document.getElementById("adminGeneratorStrengthTemplate");
-var adminGeneratorNhsTemplate = document.getElementById("adminGeneratorNhsTemplate");
-var adminGeneratorCivilTemplate = document.getElementById("adminGeneratorCivilTemplate");
-var adminGeneratorClosingTemplate = document.getElementById("adminGeneratorClosingTemplate");
-var previewAdminGeneratorConfigBtn = document.getElementById("previewAdminGeneratorConfigBtn");
+var adminGeneratorSample1 = document.getElementById("adminGeneratorSample1");
+var adminGeneratorSample2 = document.getElementById("adminGeneratorSample2");
+var adminGeneratorSample3 = document.getElementById("adminGeneratorSample3");
+var adminGeneratorSample1ToggleBtn = document.getElementById("adminGeneratorSample1ToggleBtn");
+var adminGeneratorSample2ToggleBtn = document.getElementById("adminGeneratorSample2ToggleBtn");
+var adminGeneratorSample3ToggleBtn = document.getElementById("adminGeneratorSample3ToggleBtn");
+var adminGeneratorSample1Body = document.getElementById("adminGeneratorSample1Body");
+var adminGeneratorSample2Body = document.getElementById("adminGeneratorSample2Body");
+var adminGeneratorSample3Body = document.getElementById("adminGeneratorSample3Body");
+var adminGeneratorSample1ToggleIcon = document.getElementById("adminGeneratorSample1ToggleIcon");
+var adminGeneratorSample2ToggleIcon = document.getElementById("adminGeneratorSample2ToggleIcon");
+var adminGeneratorSample3ToggleIcon = document.getElementById("adminGeneratorSample3ToggleIcon");
 var saveAdminGeneratorConfigBtn = document.getElementById("saveAdminGeneratorConfigBtn");
-var restoreAdminGeneratorConfigBtn = document.getElementById("restoreAdminGeneratorConfigBtn");
 var resetAdminGeneratorConfigBtn = document.getElementById("resetAdminGeneratorConfigBtn");
-var adminGeneratorPreview = document.getElementById("adminGeneratorPreview");
 var adminGeneratorConfigStatus = document.getElementById("adminGeneratorConfigStatus");
 var addAdminUserBtn = document.getElementById("addAdminUserBtn");
 var resetAllAdminUsageBtn = document.getElementById("resetAllAdminUsageBtn");
 var setAllAdminFreeBtn = document.getElementById("setAllAdminFreeBtn");
 var setAllAdminPremiumBtn = document.getElementById("setAllAdminPremiumBtn");
 var adminUsersCache = [];
+var adminDayAdjustmentsPending = {};
 var planBroadcastKey = "jobMatchAgentHostedPlanBroadcast";
 var planMirrorKey = "jobMatchAgentHostedPlanMirror";
 var paneOverrideMirrorKey = "jobMatchAgentPaneOverrideMirror";
+var hostedAdminApiBase = "https://jobmatchagent.vercel.app";
 
 if (adminAccessForm) {
   adminAccessForm.onsubmit = function (event) {
@@ -141,21 +144,27 @@ if (saveAdminGeneratorConfigBtn) {
     return false;
   };
 }
-if (previewAdminGeneratorConfigBtn) {
-  previewAdminGeneratorConfigBtn.onclick = function () {
-    previewAdminGeneratorConfig();
-    return false;
-  };
-}
-if (restoreAdminGeneratorConfigBtn) {
-  restoreAdminGeneratorConfigBtn.onclick = function () {
-    restoreAdminGeneratorConfig();
-    return false;
-  };
-}
 if (resetAdminGeneratorConfigBtn) {
   resetAdminGeneratorConfigBtn.onclick = function () {
     resetAdminGeneratorConfig();
+    return false;
+  };
+}
+if (adminGeneratorSample1ToggleBtn) {
+  adminGeneratorSample1ToggleBtn.onclick = function () {
+    toggleGeneratorSamplePanel(adminGeneratorSample1ToggleBtn, adminGeneratorSample1Body, adminGeneratorSample1ToggleIcon);
+    return false;
+  };
+}
+if (adminGeneratorSample2ToggleBtn) {
+  adminGeneratorSample2ToggleBtn.onclick = function () {
+    toggleGeneratorSamplePanel(adminGeneratorSample2ToggleBtn, adminGeneratorSample2Body, adminGeneratorSample2ToggleIcon);
+    return false;
+  };
+}
+if (adminGeneratorSample3ToggleBtn) {
+  adminGeneratorSample3ToggleBtn.onclick = function () {
+    toggleGeneratorSamplePanel(adminGeneratorSample3ToggleBtn, adminGeneratorSample3Body, adminGeneratorSample3ToggleIcon);
     return false;
   };
 }
@@ -163,7 +172,6 @@ if (resetAdminGeneratorConfigBtn) {
 restoreSecretAndMaybeLoad();
 populateHostedAiSettings();
 populateAdminGeneratorControls();
-previewAdminGeneratorConfig();
 renderAdminAiModelIndicator();
 if (window.addEventListener) {
   window.addEventListener("storage", function (event) {
@@ -200,6 +208,23 @@ function serviceErrorMessage(text, fallback) {
     return "Netlify Functions are not deployed on this site yet. Upload the netlify/functions folder to GitHub and redeploy.";
   }
   return clean || fallback;
+}
+function adminFunctionUrl(path) {
+  var clean = String(path || "");
+  if (/^https?:\/\//i.test(clean)) {
+    return clean;
+  }
+  if (window.location && window.location.protocol === "file:") {
+    return hostedAdminApiBase + clean;
+  }
+  return clean;
+}
+function adminNetworkErrorMessage(error, fallback) {
+  var message = trim(error && error.message || "");
+  if (/failed to fetch|networkerror|load failed/i.test(message)) {
+    return "The admin page could not reach the hosted admin service at " + hostedAdminApiBase + ". Refresh the page, check your internet connection, or use the live admin page.";
+  }
+  return message || fallback;
 }
 function setAdminAccessVisible(show) {
   if (adminAccessCard) {
@@ -387,17 +412,18 @@ function saveHostedAiSettings() {
 }
 function renderAdminAiModelIndicator() {
   var geminiModel = defaultOpenAiModel || "gemini-2.5-flash-lite";
-  var failover = "Gemini (" + geminiModel + ") -> GPT-OSS (openai/gpt-oss-120b:fastest) -> Cloudflare (@cf/meta/llama-3.1-8b-instruct) -> Hugging Face (meta-llama/Llama-3.1-8B-Instruct)";
+  var failover = "Gemini (" + geminiModel + ") -> DeepSeek (deepseek-v4-pro) -> GPT-OSS (openai/gpt-oss-120b:fastest) -> Cloudflare (@cf/meta/llama-3.1-8b-instruct) -> Hugging Face (meta-llama/Llama-3.1-8B-Instruct)";
   var usage = loadAiModelUsage();
   var rows = [
-    ["cv-builder", "1. Generate CV", failover, "Generated CV tries all AI providers for 3 cycles before local fallback. The indicator shows the latest provider the CV pane actually used."],
-    ["cover-letter", "2. Generate Cover Letter", failover, "Cover letter tries all AI providers for 3 cycles before local fallback. The indicator shows the latest provider the cover-letter pane actually used."],
-    ["sponsor-search", "3. Search for Companies with Skilled Worker Licence", "Local sponsor database first; AI insight summary uses " + failover, "Search results are local. AI only helps summarise and rank visible results when available."],
+    ["cv-builder", "1. Generate CV", failover, "Generated CV tries all AI providers for 3 cycles before built-in fallback. The indicator shows the latest provider the CV pane actually used."],
+    ["cover-letter", "2. Generate Cover Letter", failover, "Cover letter tries all AI providers for 3 cycles before built-in fallback. The indicator shows the latest provider the cover-letter pane actually used."],
+    ["sponsor-search", "3. Search for Companies with Skilled Worker Licence", "Sponsor database first; AI insight summary uses " + failover, "Search results come from the sponsor database. AI only helps summarise and rank visible results when available."],
     ["visa-jobs", "4. Land a Job with Visa Sponsorship", "No AI model", "This pane finds sponsor-matched live adverts through the hosted search flow and browser search helpers rather than an AI generation model."],
     ["remote-jobs", "5. Land a Remote Job", "No AI model", "This pane links users to remote-job platforms and does not call an AI model."],
-    ["career-plan", "6. Career Path Planner", failover, "Tries the route for 3 cycles, then uses the built-in 50-career local planner if needed."],
-    ["interview-questions", "7. Get Possible Interview Questions", failover, "Tries the route for 3 cycles, then uses the built-in local interview-question generator if needed."],
-    ["rex-chat", "8. Chat with Rex (Interview Coach)", failover, "Rex tries Gemini, GPT-OSS, Cloudflare, and Hugging Face for 3 cycles before local fallback. The indicator shows the latest provider Rex actually used."]
+    ["cv-scorer", "6. CV Scorer", failover, "CV Scorer tries the AI route first, then uses the built-in ATS scoring rules if needed."],
+    ["career-plan", "7. Career Path Planner", failover, "Tries the route for 3 cycles, then uses the built-in 1000-role planner if needed."],
+    ["interview-questions", "8. Get Possible Interview Questions", failover, "Tries the route for 3 cycles, then uses the built-in interview-question generator if needed."],
+    ["rex-chat", "9. Chat with Rex (Interview Coach)", failover, "Rex tries Gemini, DeepSeek, GPT-OSS, Cloudflare, and Hugging Face for 3 cycles before built-in fallback. The indicator shows the latest provider Rex actually used."]
   ];
   var html = "", i, used, route, note;
   if (!adminAiModelTableBody) {
@@ -443,25 +469,6 @@ function loadGeneratorConfig() {
   }
   return config;
 }
-function loadPreviousGeneratorConfig() {
-  var stored = null;
-  var config = {};
-  var key;
-  try {
-    stored = window.localStorage ? JSON.parse(window.localStorage.getItem(generatorConfigHistoryKey) || "null") : null;
-  } catch (error) {
-    stored = null;
-  }
-  if (!stored) {
-    return null;
-  }
-  for (key in defaultGeneratorConfig) {
-    if (defaultGeneratorConfig.hasOwnProperty(key)) {
-      config[key] = stored && typeof stored[key] === "string" && trim(stored[key]) ? stored[key] : defaultGeneratorConfig[key];
-    }
-  }
-  return config;
-}
 function saveGeneratorConfig(config) {
   try {
     if (window.localStorage) {
@@ -472,55 +479,80 @@ function saveGeneratorConfig(config) {
     return false;
   }
 }
-function savePreviousGeneratorConfig(config) {
-  try {
-    if (window.localStorage) {
-      window.localStorage.setItem(generatorConfigHistoryKey, JSON.stringify(config));
-    }
-    return true;
-  } catch (error) {
-    return false;
+function normalizeGeneratorConfigObject(input) {
+  var source = input && typeof input === "object" ? input : {};
+  var config = {};
+  var key;
+  var value;
+  if (!trim(source.coverLetterSample1) && trim(source.masterCoverLetterTemplate)) {
+    source = {
+      coverLetterSample1: trim(source.masterCoverLetterTemplate),
+      coverLetterSample2: trim(source.coverLetterSample2),
+      coverLetterSample3: trim(source.coverLetterSample3)
+    };
   }
+  for (key in defaultGeneratorConfig) {
+    if (defaultGeneratorConfig.hasOwnProperty(key)) {
+      value = trim(source[key]);
+      config[key] = value || defaultGeneratorConfig[key];
+    }
+  }
+  return config;
+}
+function saveHostedGeneratorConfigToServer(config) {
+  var secret = getValidatedAdminSecret();
+  if (!secret) {
+    setAdminAccessVisible(true);
+    setStatus("bad", "Admin passkey is incorrect.");
+    return Promise.reject(new Error("Admin passkey is incorrect."));
+  }
+  return fetch(adminFunctionUrl("/.netlify/functions/admin-manage-user"), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-admin-secret": secret,
+      "cache-control": "no-store",
+      "pragma": "no-cache"
+    },
+    body: JSON.stringify({
+      action: "setCoverLetterGeneratorConfig",
+      payload: {
+        config: normalizeGeneratorConfigObject(config)
+      }
+    })
+  }).then(function (response) {
+    return response.text().then(function (text) {
+      var data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (parseError) {
+        data = { ok: false, message: serviceErrorMessage(text, "The cover letter logic service returned " + response.status + ".") };
+      }
+      if (!response.ok || !data || !data.ok) {
+        throw new Error(data && data.message ? data.message : "The hosted cover letter logic could not be saved.");
+      }
+      return data;
+    });
+  });
 }
 function readAdminGeneratorControls() {
-  return {
-    introTemplate: trim(adminGeneratorIntroTemplate && adminGeneratorIntroTemplate.value) || defaultGeneratorConfig.introTemplate,
-    strengthTemplate: trim(adminGeneratorStrengthTemplate && adminGeneratorStrengthTemplate.value) || defaultGeneratorConfig.strengthTemplate,
-    nhsTemplate: trim(adminGeneratorNhsTemplate && adminGeneratorNhsTemplate.value) || defaultGeneratorConfig.nhsTemplate,
-    civilTemplate: trim(adminGeneratorCivilTemplate && adminGeneratorCivilTemplate.value) || defaultGeneratorConfig.civilTemplate,
-    closingTemplate: trim(adminGeneratorClosingTemplate && adminGeneratorClosingTemplate.value) || defaultGeneratorConfig.closingTemplate
-  };
+  return normalizeGeneratorConfigObject({
+    coverLetterSample1: trim(adminGeneratorSample1 && adminGeneratorSample1.value),
+    coverLetterSample2: trim(adminGeneratorSample2 && adminGeneratorSample2.value),
+    coverLetterSample3: trim(adminGeneratorSample3 && adminGeneratorSample3.value)
+  });
 }
 function populateAdminGeneratorControls() {
-  var config = loadGeneratorConfig();
-  if (adminGeneratorIntroTemplate) {
-    adminGeneratorIntroTemplate.value = config.introTemplate;
+  var config = normalizeGeneratorConfigObject(loadGeneratorConfig());
+  if (adminGeneratorSample1) {
+    adminGeneratorSample1.value = config.coverLetterSample1;
   }
-  if (adminGeneratorStrengthTemplate) {
-    adminGeneratorStrengthTemplate.value = config.strengthTemplate;
+  if (adminGeneratorSample2) {
+    adminGeneratorSample2.value = config.coverLetterSample2;
   }
-  if (adminGeneratorNhsTemplate) {
-    adminGeneratorNhsTemplate.value = config.nhsTemplate;
+  if (adminGeneratorSample3) {
+    adminGeneratorSample3.value = config.coverLetterSample3;
   }
-  if (adminGeneratorCivilTemplate) {
-    adminGeneratorCivilTemplate.value = config.civilTemplate;
-  }
-  if (adminGeneratorClosingTemplate) {
-    adminGeneratorClosingTemplate.value = config.closingTemplate;
-  }
-}
-function renderGeneratorPreview(config) {
-  var opener = config.introTemplate + " This preview is shaped for a Data Analyst vacancy in Wolverhampton.";
-  var strengths = config.strengthTemplate + " Highlight SQL reporting, dashboard production, stakeholder communication, and record accuracy with direct relevance to the advertised duties.";
-  var sector = config.nhsTemplate + " " + config.civilTemplate;
-  var closing = config.closingTemplate + " Yours faithfully, Hiring Candidate";
-  return opener + "\n\n" + strengths + "\n\n" + sector + "\n\n" + closing;
-}
-function setAdminGeneratorPreview(text) {
-  if (!adminGeneratorPreview) {
-    return;
-  }
-  adminGeneratorPreview.textContent = text;
 }
 function setAdminGeneratorStatus(tone, text) {
   if (!adminGeneratorConfigStatus) {
@@ -530,44 +562,33 @@ function setAdminGeneratorStatus(tone, text) {
   adminGeneratorConfigStatus.innerHTML = esc(text);
 }
 function saveAdminGeneratorConfig() {
-  var current = loadGeneratorConfig();
   var next = readAdminGeneratorControls();
-  if (!savePreviousGeneratorConfig(current) || !saveGeneratorConfig(next)) {
-    setAdminGeneratorStatus("bad", "The hosted cover letter logic could not be saved.");
-    return;
-  }
-  setAdminGeneratorPreview(renderGeneratorPreview(next));
-  setAdminGeneratorStatus("good", "Saved hosted cover letter generator logic. New generated drafts will use it.");
-}
-function previewAdminGeneratorConfig() {
-  var config = readAdminGeneratorControls();
-  setAdminGeneratorPreview(renderGeneratorPreview(config));
-  setAdminGeneratorStatus("neutral", "Preview updated from the current logic fields.");
-}
-function restoreAdminGeneratorConfig() {
-  var previous = loadPreviousGeneratorConfig();
-  var current = loadGeneratorConfig();
-  if (!previous) {
-    setAdminGeneratorStatus("bad", "There is no earlier saved logic to restore yet.");
-    return;
-  }
-  if (!savePreviousGeneratorConfig(current) || !saveGeneratorConfig(previous)) {
-    setAdminGeneratorStatus("bad", "The previous hosted cover letter logic could not be restored.");
-    return;
-  }
-  populateAdminGeneratorControls();
-  setAdminGeneratorPreview(renderGeneratorPreview(previous));
-  setAdminGeneratorStatus("good", "Restored the previous saved cover letter logic.");
+  setAdminGeneratorStatus("neutral", "Saving the hosted cover letter samples now...");
+  saveHostedGeneratorConfigToServer(next).then(function (data) {
+    var saved = normalizeGeneratorConfigObject(data && data.generator_config ? data.generator_config : next);
+    if (!saveGeneratorConfig(saved)) {
+      setAdminGeneratorStatus("bad", "The hosted cover letter samples were saved, but the admin copy could not be refreshed.");
+      return;
+    }
+    populateAdminGeneratorControls();
+    setAdminGeneratorStatus("good", "Saved the hosted cover letter samples. Future generated cover letters will use them as guidance templates.");
+  }).catch(function (error) {
+    setAdminGeneratorStatus("bad", trim(error && error.message || "") || "The hosted cover letter samples could not be saved.");
+  });
 }
 function resetAdminGeneratorConfig() {
-  var current = loadGeneratorConfig();
-  if (!savePreviousGeneratorConfig(current) || !saveGeneratorConfig(defaultGeneratorConfig)) {
-    setAdminGeneratorStatus("bad", "The hosted cover letter logic could not be reset.");
-    return;
-  }
-  populateAdminGeneratorControls();
-  setAdminGeneratorPreview(renderGeneratorPreview(defaultGeneratorConfig));
-  setAdminGeneratorStatus("good", "Reset hosted cover letter generator logic to the default rules.");
+  setAdminGeneratorStatus("neutral", "Resetting the hosted cover letter samples...");
+  saveHostedGeneratorConfigToServer(defaultGeneratorConfig).then(function (data) {
+    var resetConfig = normalizeGeneratorConfigObject(data && data.generator_config ? data.generator_config : defaultGeneratorConfig);
+    if (!saveGeneratorConfig(resetConfig)) {
+      setAdminGeneratorStatus("bad", "The hosted cover letter samples were reset, but the admin copy could not be refreshed.");
+      return;
+    }
+    populateAdminGeneratorControls();
+    setAdminGeneratorStatus("good", "Reset the hosted cover letter samples.");
+  }).catch(function (error) {
+    setAdminGeneratorStatus("bad", trim(error && error.message || "") || "The hosted cover letter samples could not be reset.");
+  });
 }
 function jumpToAdminGeneratorPanel() {
   if (adminGeneratorPanel && adminGeneratorPanel.hidden) {
@@ -581,8 +602,8 @@ function jumpToAdminGeneratorPanel() {
     adminGeneratorPanel.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {}
   try {
-    if (adminGeneratorIntroTemplate) {
-      adminGeneratorIntroTemplate.focus();
+    if (adminGeneratorSample1) {
+      adminGeneratorSample1.focus();
     }
   } catch (error) {}
 }
@@ -600,6 +621,18 @@ function toggleAdminGeneratorPanel(forceOpen) {
   adminGeneratorPanel.className = willOpen ? "auth-card collapsed-panel open" : "auth-card collapsed-panel";
   if (adminGeneratorToggleIcon) {
     adminGeneratorToggleIcon.innerHTML = willOpen ? "-" : "+";
+  }
+}
+function toggleGeneratorSamplePanel(button, body, icon, forceOpen) {
+  var willOpen;
+  if (!button || !body) {
+    return;
+  }
+  willOpen = typeof forceOpen === "boolean" ? forceOpen : !!body.hidden;
+  body.hidden = !willOpen;
+  button.setAttribute("aria-expanded", willOpen ? "true" : "false");
+  if (icon) {
+    icon.innerHTML = willOpen ? "-" : "+";
   }
 }
 function normalizeRole(value) {
@@ -668,13 +701,13 @@ function clearSecret() {
   if (adminGeneratorPanel) {
     adminGeneratorPanel.hidden = true;
   }
-  setStatus("neutral", "Enter passkey: job-agent");
+  setStatus("neutral", "Enter the admin passkey.");
 }
 function restoreSecretAndMaybeLoad() {
   var secret = getSecret();
   if (secret && !isValidAdminPasskey(secret)) {
     clearSecret();
-    setStatus("neutral", "Enter passkey: job-agent");
+    setStatus("neutral", "Enter the admin passkey.");
     return;
   }
   if (adminSecretInput) {
@@ -691,7 +724,7 @@ function restoreSecretAndMaybeLoad() {
 function saveSecretAndLoad() {
   var secret = trim(adminSecretInput && adminSecretInput.value);
   if (!isValidAdminPasskey(secret)) {
-    setStatus("bad", "Use passkey: job-agent");
+    setStatus("bad", "Admin passkey is incorrect.");
     return;
   }
   saveSecret(adminFixedPasskey);
@@ -702,11 +735,11 @@ function loadAdminUsers() {
   var secret = getValidatedAdminSecret();
   if (!secret) {
     setAdminAccessVisible(true);
-    setStatus("bad", "Use passkey: job-agent");
+    setStatus("bad", "Admin passkey is incorrect.");
     return;
   }
   setStatus("neutral", "Loading user activity now...");
-  fetch("/.netlify/functions/admin-users?ts=" + Date.now(), {
+  fetch(adminFunctionUrl("/.netlify/functions/admin-users?ts=" + Date.now()), {
     cache: "no-store",
     headers: {
       "x-admin-secret": secret,
@@ -746,6 +779,9 @@ function loadAdminUsers() {
       return;
     }
     adminUsersCache = (result.data.users || []).slice(0);
+    if (result.data.generator_config && saveGeneratorConfig(normalizeGeneratorConfigObject(result.data.generator_config))) {
+      populateAdminGeneratorControls();
+    }
     setAdminAccessVisible(false);
     applyAdminSearch();
     if (adminPanel) {
@@ -770,7 +806,7 @@ function loadAdminUsers() {
     setStatus("good", "Monitoring view updated successfully.");
   }).catch(function (error) {
     setAdminAccessVisible(true);
-    setStatus("bad", trim(error && error.message || "") || "Could not load the monitoring view.");
+    setStatus("bad", adminNetworkErrorMessage(error, "Could not load the monitoring view."));
     if (adminPanel) {
       adminPanel.hidden = true;
     }
@@ -806,15 +842,12 @@ function renderAdminUsers(users) {
       "<td>" + esc(user.created_at || "-") + "</td>" +
       "<td>" + esc(user.last_sign_in_at || "-") + "</td>" +
       "<td>" + esc(user.subscription || user.plan || "Free") + "</td>" +
-      "<td><div class=\"admin-days-controls\"><button class=\"ghost-button small-button admin-inline-btn admin-days-btn\" type=\"button\" data-email=\"" + esc(user.email || "") + "\" data-action=\"adjustDaysRemaining\" data-delta=\"-1\">-</button><span class=\"admin-days-value\">" + esc(user.days_remaining || user.daysRemaining || "-") + "</span><button class=\"ghost-button small-button admin-inline-btn admin-days-btn\" type=\"button\" data-email=\"" + esc(user.email || "") + "\" data-action=\"adjustDaysRemaining\" data-delta=\"1\">+</button></div></td>" +
+      "<td>" + renderDaysRemainingControls(user) + "</td>" +
       "<td>" + esc(roleLabel(user.role)) + "</td>" +
       "</tr>" +
       "<tr class=\"admin-user-action-row\"><td colspan=\"7\"><div class=\"admin-user-actions\">" +
       "<button class=\"ghost-button small-button admin-adjust-btn\" type=\"button\" data-email=\"" + esc(user.email || "") + "\" data-action=\"resetUsage\">Reset usage</button>" +
-      "<button class=\"ghost-button small-button admin-admin-btn\" type=\"button\" data-email=\"" + esc(user.email || "") + "\" data-action=\"setSubscription\" data-plan=\"1 month\">1 Month</button>" +
-      "<button class=\"ghost-button small-button admin-admin-btn\" type=\"button\" data-email=\"" + esc(user.email || "") + "\" data-action=\"setSubscription\" data-plan=\"6 months\">6 Months</button>" +
-      "<button class=\"ghost-button small-button admin-admin-btn\" type=\"button\" data-email=\"" + esc(user.email || "") + "\" data-action=\"setSubscription\" data-plan=\"12 months\">12 Months</button>" +
-      "<button class=\"ghost-button small-button admin-admin-btn\" type=\"button\" data-email=\"" + esc(user.email || "") + "\" data-action=\"setSubscription\" data-plan=\"lifetime\">Lifetime</button>" +
+      buildPlanSelectHtml(user.email || "") +
       "<button class=\"ghost-button small-button admin-admin-btn\" type=\"button\" data-email=\"" + esc(user.email || "") + "\" data-action=\"" + (normalizeRole(user.role) === "admin" ? "setUserRole" : "setAdminRole") + "\">" + (normalizeRole(user.role) === "admin" ? "Make user" : "Make admin") + "</button>" +
       "<button class=\"ghost-button small-button admin-admin-btn\" type=\"button\" data-email=\"" + esc(user.email || "") + "\" data-action=\"changePassword\">Change password</button>" +
       "<button class=\"ghost-button small-button admin-admin-btn\" type=\"button\" data-email=\"" + esc(user.email || "") + "\" data-action=\"deleteUser\">Delete</button>" +
@@ -825,20 +858,60 @@ function renderAdminUsers(users) {
   }
   adminTableBody.innerHTML = rows;
 }
+function renderDaysRemainingControls(user) {
+  var email = trim(user && user.email || "");
+  var value = trim(user && (user.days_remaining || user.daysRemaining) || "-");
+  if (low(value) === "unlimited") {
+    return "<span class=\"admin-days-value\">Unlimited</span>";
+  }
+  return "<div class=\"admin-days-controls\">" +
+    "<button class=\"ghost-button small-button admin-inline-btn admin-days-btn\" type=\"button\" data-email=\"" + esc(email) + "\" data-action=\"adjustDaysRemaining\" data-delta=\"-1\" aria-label=\"Remove one day from " + esc(email) + "\" title=\"Remove 1 day\">-</button>" +
+    "<span class=\"admin-days-value\" aria-live=\"polite\">" + esc(value) + "</span>" +
+    "<button class=\"ghost-button small-button admin-inline-btn admin-days-btn\" type=\"button\" data-email=\"" + esc(email) + "\" data-action=\"adjustDaysRemaining\" data-delta=\"1\" aria-label=\"Add one day to " + esc(email) + "\" title=\"Add 1 day\">+</button>" +
+    "</div>";
+}
+function setDayAdjustmentBusy(email, busy) {
+  var key = low(email);
+  var buttons = adminTableBody ? adminTableBody.querySelectorAll(".admin-days-btn") : [];
+  var i, button;
+  if (busy) {
+    adminDayAdjustmentsPending[key] = true;
+  } else {
+    delete adminDayAdjustmentsPending[key];
+  }
+  for (i = 0; i < buttons.length; i += 1) {
+    button = buttons[i];
+    if (low(button.getAttribute("data-email")) === key) {
+      button.disabled = !!busy;
+      button.setAttribute("aria-busy", busy ? "true" : "false");
+    }
+  }
+}
+function adjustUserDays(email, delta) {
+  var key = low(email);
+  if (adminDayAdjustmentsPending[key]) {
+    return;
+  }
+  setDayAdjustmentBusy(email, true);
+  runAdminAction("adjustDaysRemaining", { email: email, delta: delta }).then(function () {
+    setDayAdjustmentBusy(email, false);
+  });
+}
 function renderPaneSummaryHtml(user) {
   var locked = normalizePaneLockList(user && (user.locked_panes || user.lockedPanes || []));
   return "<div class=\"admin-pane-summary\"><strong>Locked panes:</strong> " + esc(locked.length ? locked.map(paneSummaryLabel).join(", ") : "None") + "</div>";
 }
 function normalizePaneLockId(value) {
   var text = low(String(value || "")).replace(/[^a-z0-9]+/g, "");
-  if (text === "pane1" || text === "1" || text === "cvbuildertogglebtn") { return "pane1"; }
-  if (text === "pane2" || text === "2" || text === "coverlettertogglebtn") { return "pane2"; }
-  if (text === "pane3" || text === "3" || text === "sponsorsearchtogglebtn") { return "pane3"; }
-  if (text === "pane4" || text === "4" || text === "visajobstogglebtn") { return "pane4"; }
-  if (text === "pane5" || text === "5" || text === "remotejobstogglebtn") { return "pane5"; }
-  if (text === "pane6" || text === "6" || text === "careerpathtogglebtn") { return "pane6"; }
-  if (text === "pane7" || text === "7" || text === "interviewquestionstogglebtn") { return "pane7"; }
-  if (text === "pane8" || text === "8" || text === "rexchattogglebtn") { return "pane8"; }
+  if (text === "pane1" || text === "1" || text === "cvbuilder" || text === "cvbuildertogglebtn") { return "pane1"; }
+  if (text === "pane2" || text === "2" || text === "coverletter" || text === "coverlettertogglebtn") { return "pane2"; }
+  if (text === "pane3" || text === "3" || text === "sponsorsearch" || text === "sponsorsearchtogglebtn") { return "pane3"; }
+  if (text === "pane4" || text === "4" || text === "visajobs" || text === "visajobstogglebtn") { return "pane4"; }
+  if (text === "pane5" || text === "5" || text === "remotejobs" || text === "remotejobstogglebtn") { return "pane5"; }
+  if (text === "pane6" || text === "6" || text === "cvscorer" || text === "cvscorertogglebtn") { return "pane6"; }
+  if (text === "pane7" || text === "7" || text === "careerplan" || text === "careerpath" || text === "careerpathtogglebtn") { return "pane7"; }
+  if (text === "pane8" || text === "8" || text === "interviewquestions" || text === "interviewquestionstogglebtn") { return "pane8"; }
+  if (text === "pane9" || text === "9" || text === "rexchat" || text === "rexchattogglebtn") { return "pane9"; }
   return "";
 }
 function normalizePaneLockList(value) {
@@ -855,7 +928,16 @@ function normalizePaneLockList(value) {
 }
 function paneSummaryLabel(value) {
   var paneId = normalizePaneLockId(value);
-  if(paneId==="pane5"){return "Pane 5 - Land a Remote Job";}if(paneId==="pane6"){return "Pane 6 - Career Path Planner";}if(paneId==="pane7"){return "Pane 7 - Get Possible Interview Questions";}if(paneId==="pane8"){return "Pane 8 - Chat with Rex";}return paneId ? ("Pane " + paneId.replace("pane", "")) : String(value || "");
+  if (paneId === "pane1") { return "Pane 1 - Generate CV"; }
+  if (paneId === "pane2") { return "Pane 2 - Generate Cover Letter"; }
+  if (paneId === "pane3") { return "Pane 3 - Search for Companies with Skilled Worker Licence"; }
+  if (paneId === "pane4") { return "Pane 4 - Land a Job with Visa Sponsorship"; }
+  if (paneId === "pane5") { return "Pane 5 - Land a Remote Job"; }
+  if (paneId === "pane6") { return "Pane 6 - CV Scorer"; }
+  if (paneId === "pane7") { return "Pane 7 - Career Path Planner"; }
+  if (paneId === "pane8") { return "Pane 8 - Get Possible Interview Questions"; }
+  if (paneId === "pane9") { return "Pane 9 - Chat with Rex"; }
+  return String(value || "");
 }
 function buildPaneSelectHtml(email, action, label) {
   var options = [
@@ -867,9 +949,20 @@ function buildPaneSelectHtml(email, action, label) {
     "<option value=\"pane5\">Pane 5</option>",
     "<option value=\"pane6\">Pane 6</option>",
     "<option value=\"pane7\">Pane 7</option>",
-    "<option value=\"pane8\">Pane 8</option>"
+    "<option value=\"pane8\">Pane 8</option>",
+    "<option value=\"pane9\">Pane 9</option>"
   ];
   return "<select class=\"admin-pane-select\" data-email=\"" + esc(email || "") + "\" data-action=\"" + esc(action) + "\">" + options.join("") + "</select>";
+}
+function buildPlanSelectHtml(email) {
+  var options = [
+    "<option value=\"\">Change plan</option>",
+    "<option value=\"1 month\">1 Month</option>",
+    "<option value=\"6 months\">6 Months</option>",
+    "<option value=\"12 months\">12 Months</option>",
+    "<option value=\"lifetime\">Lifetime</option>"
+  ];
+  return "<select class=\"admin-plan-select\" data-email=\"" + esc(email || "") + "\" data-action=\"setSubscription\">" + options.join("") + "</select>";
 }
 
 function mergeAdminUserUpdate(payload) {
@@ -998,7 +1091,10 @@ if (adminTableBody) {
       return;
     }
     if (action === "adjustDaysRemaining") {
-      runAdminAction(action, { email: email, delta: delta });
+      if (event && event.preventDefault) {
+        event.preventDefault();
+      }
+      adjustUserDays(email, delta);
       return;
     }
     if (action === "changePassword") {
@@ -1022,11 +1118,20 @@ if (adminTableBody) {
     var action = "";
     var email = "";
     var paneId = "";
-    if (!target || !target.getAttribute || String(target.className || "").indexOf("admin-pane-select") === -1) {
+    var className = String(target && target.className || "");
+    if (!target || !target.getAttribute || (className.indexOf("admin-pane-select") === -1 && className.indexOf("admin-plan-select") === -1)) {
       return;
     }
     action = trim(target.getAttribute("data-action"));
     email = trim(target.getAttribute("data-email"));
+    if (className.indexOf("admin-plan-select") !== -1) {
+      if (!action || !email || !trim(target.value)) {
+        return;
+      }
+      runAdminAction("setPremium", { email: email, planType: trim(target.value) });
+      target.value = "";
+      return;
+    }
     paneId = trim(target.value);
     if (!action || !email || !paneId) {
       return;
@@ -1092,11 +1197,11 @@ function changeHostedUserPassword(email) {
 function runAdminAction(action, payload) {
   var secret = getValidatedAdminSecret();
   if (!secret) {
-    setStatus("bad", "Use passkey: job-agent");
+    setStatus("bad", "Admin passkey is incorrect.");
     return Promise.resolve(false);
   }
   setStatus("neutral", "Applying admin change now...");
-  return fetch("/.netlify/functions/admin-manage-user", {
+  return fetch(adminFunctionUrl("/.netlify/functions/admin-manage-user"), {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -1129,7 +1234,7 @@ function runAdminAction(action, payload) {
     loadAdminUsers();
     return true;
   }).catch(function (error) {
-    setStatus("bad", trim(error && error.message || "") || "That admin action could not be completed.");
+    setStatus("bad", adminNetworkErrorMessage(error, "That admin action could not be completed."));
     return false;
   });
 }

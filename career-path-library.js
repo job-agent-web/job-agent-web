@@ -226,12 +226,34 @@
     }
     return false;
   }
-  function fromEntry(entry) {
+  function requestsUkRoute(goal) {
+    return /\b(uk|united kingdom|england|scotland|wales|northern ireland)\b/i.test(clean(goal));
+  }
+  function hasCountrySpecificRoute(entry) {
+    return /\b(NMC|HCPC|IBMS|GPhC|GDC|GMC|Social Work England|RCVS|QTS|PGCE|UKHSA|NHS|DBS|Gas Safe|CSCS|SMSTS|SSSTS|NCTJ)\b/i.test(JSON.stringify(entry || {}));
+  }
+  function fromEntry(entry, goal) {
+    var useUkRoute = requestsUkRoute(goal);
+    var countrySpecific = hasCountrySpecificRoute(entry) && !useUkRoute;
+    var route = countrySpecific
+      ? "the accredited education, supervised practice, licensing, registration, and local compliance requirements for the country where you plan to work"
+      : entry.route;
+    var progression = countrySpecific
+      ? "professional registration where required, supervised early-career practice, and progressively more specialised or senior responsibility"
+      : entry.progression;
+    var certifications = countrySpecific ? [
+      "The accredited qualification required by the regulator in your target country",
+      "Any supervised practice, licensing examination, registration, or background checks required locally",
+      "Role-specific safety, ethics, safeguarding, and continuing professional development training"
+    ] : (entry.certifications || []);
+    var channels = (entry.channels || []).filter(function (item) {
+      return useUkRoute || !/\b(NMC|HCPC|IBMS|UKHSA|NHS|Social Work England|RCVS)\b/i.test(clean(item));
+    });
     return {
       track: entry.track,
       education: [
-        "Follow the recognised route for " + entry.track + ", focusing on " + entry.route + ".",
-        "Check current UK entry requirements, regulator expectations, apprenticeship or degree options, and the evidence employers repeatedly request."
+        "Follow the recognised route for " + entry.track + ", focusing on " + route + ".",
+        "Check current entry requirements, regulator expectations, apprenticeship or degree options in the country where you plan to work, and the evidence employers repeatedly request."
       ],
       skills: [
         "Build practical competence in " + entry.skills + ".",
@@ -244,9 +266,9 @@
       proof: ["Create a portfolio, reflective log, project record, placement evidence, or achievement bank that proves your progress in " + entry.track + "."],
       network: ["Follow professional bodies, employers, recruiters, and practitioners in " + entry.track + " so you understand realistic entry routes and current expectations."],
       search: ["Target " + entry.search + " as practical stepping-stone roles."],
-      progression: ["Progress towards " + entry.progression + " by adding stronger responsibility, measurable outcomes, and recognised credentials."],
-      certifications: entry.certifications || [],
-      channels: entry.channels || []
+      progression: ["Progress towards " + progression + " by adding stronger responsibility, measurable outcomes, and recognised credentials."],
+      certifications: certifications,
+      channels: channels
     };
   }
   window.getJobMatchCareerPathCount = function () {
@@ -258,7 +280,7 @@
     var i;
     for (i = 0; i < paths.length; i += 1) {
       if (hasAny(text, paths[i].keywords || [])) {
-        return fromEntry(paths[i]);
+        return fromEntry(paths[i], goal);
       }
     }
     return null;

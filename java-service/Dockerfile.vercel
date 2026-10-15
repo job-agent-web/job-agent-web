@@ -1,0 +1,17 @@
+FROM maven:3.9.11-eclipse-temurin-21 AS build
+WORKDIR /build
+COPY java-service/pom.xml ./pom.xml
+RUN mvn -B -q dependency:go-offline
+COPY java-service/src ./src
+RUN mvn -B -q verify
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=build /build/target/jobmatchagent.jar /app/jobmatchagent.jar
+COPY public/ /app/public/
+USER app
+ENV PORT=8080
+ENV PUBLIC_DIR=/app/public
+EXPOSE 8080
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/jobmatchagent.jar"]

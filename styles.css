@@ -6,6 +6,9 @@
   --panel-strong: rgba(255, 255, 255, 0.92);
   --ink: #11203b;
   --muted: #56657f;
+  --text: var(--ink);
+  --ink-1: var(--ink);
+  --muted-text: var(--muted);
   --line: rgba(17, 32, 59, 0.1);
   --accent: #ff6b35;
   --accent-2: #ffb703;
@@ -32,7 +35,13 @@ body[data-theme="dark"] {
   --panel-strong: rgba(13, 24, 40, 0.94);
   --ink: #eef4ff;
   --muted: #a4b3c9;
+  --text: var(--ink);
+  --ink-1: var(--ink);
+  --muted-text: var(--muted);
   --line: rgba(187, 206, 235, 0.14);
+  --good: #6ee7b7;
+  --warn: #fbbf24;
+  --bad: #fca5a5;
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
   --shadow-soft: 0 16px 36px rgba(0, 0, 0, 0.22);
   --hero-card-text: #f8fbff;
@@ -204,6 +213,192 @@ body::after {
 .auth-title {
   font-size: clamp(2rem, 4vw, 3rem);
   line-height: 0.95;
+}
+
+.app-download-panel {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 16px;
+  border: 1px solid rgba(58, 134, 255, 0.16);
+  border-radius: 20px;
+  padding: 15px;
+  background:
+    linear-gradient(135deg, rgba(58, 134, 255, 0.1), rgba(0, 184, 148, 0.09)),
+    rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.app-download-panel[hidden] {
+  display: none !important;
+}
+
+.app-download-panel span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-download-panel strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.app-download-links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.app-download-link {
+  min-height: 42px;
+  border: 1px solid rgba(58, 134, 255, 0.18);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 12px;
+  background: linear-gradient(180deg, #ffffff, #f1f6ff);
+  color: #225fc8;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.app-download-link[data-install-platform="ios"] {
+  color: #11203b;
+}
+
+.app-download-link[data-install-platform="android"] {
+  color: #067647;
+}
+
+.app-download-link:hover,
+.app-download-link:focus-visible {
+  border-color: rgba(58, 134, 255, 0.38);
+  box-shadow: 0 12px 26px rgba(58, 134, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.app-download-link:active {
+  transform: scale(0.98);
+}
+
+.app-download-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.app-install-modal[hidden] {
+  display: none !important;
+}
+
+.app-install-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(6, 18, 38, 0.58);
+  backdrop-filter: blur(12px);
+}
+
+.app-install-card {
+  position: relative;
+  width: min(430px, 100%);
+  border: 1px solid rgba(58, 134, 255, 0.2);
+  border-radius: 22px;
+  padding: 24px;
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.99), rgba(235, 247, 255, 0.97)),
+    #ffffff;
+  color: #10203a;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
+  animation: appInstallModalIn 180ms ease both;
+}
+
+.app-install-card h2 {
+  margin: 3px 0 10px;
+  color: #10203a;
+  font-size: 1.45rem;
+  line-height: 1.15;
+}
+
+.app-install-copy {
+  margin: 0 0 16px;
+  color: #465a78;
+  line-height: 1.5;
+}
+
+.app-install-steps {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding-left: 22px;
+  color: #17233a;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.app-install-steps li::marker {
+  color: var(--accent-4);
+  font-weight: 900;
+}
+
+.app-install-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  border: 1px solid rgba(58, 134, 255, 0.16);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: #ffffff;
+  color: #225fc8;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.app-install-done {
+  width: 100%;
+}
+
+body.app-install-open {
+  overflow: hidden;
+}
+
+@keyframes appInstallModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 520px) {
+  .app-download-panel {
+    padding: 13px;
+  }
+
+  .app-download-links {
+    grid-template-columns: 1fr;
+  }
+
+  .app-install-card {
+    border-radius: 18px;
+    padding: 20px 18px;
+  }
 }
 
 .auth-tabs {
@@ -774,8 +969,173 @@ h2 {
 .sponsor-search-panel .collapsed-body,
 .visa-jobs-panel .collapsed-body,
 .career-path-panel .collapsed-body,
-.interview-questions-panel .collapsed-body {
+.interview-questions-panel .collapsed-body,
+.cv-scorer-panel .collapsed-body {
   margin-top: 16px;
+}
+
+.cv-scorer-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(238, 244, 255, 0.9)),
+    linear-gradient(135deg, rgba(58, 134, 255, 0.08), rgba(0, 184, 148, 0.08));
+}
+
+.cv-scorer-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: end;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(17, 32, 59, 0.08);
+}
+
+.cv-scorer-header h3 {
+  margin: 4px 0 8px;
+  font-size: clamp(1.35rem, 3vw, 1.9rem);
+}
+
+.cv-scorer-main-action {
+  min-width: 140px;
+  white-space: nowrap;
+}
+
+.cv-scorer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 16px;
+}
+
+.cv-scorer-mini-action {
+  width: auto;
+  min-height: 0;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.cv-scorer-upload-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  cursor: pointer;
+}
+
+.cv-scorer-upload-label .native-upload-input {
+  display: none;
+}
+
+.cv-scorer-grid {
+  gap: 14px;
+}
+
+.cv-scorer-grid textarea {
+  min-height: 170px;
+}
+
+.cv-scorer-cv-text-label {
+  display: grid;
+  gap: 8px;
+}
+
+.cv-scorer-cv-text-label textarea {
+  min-height: 260px;
+}
+
+body[data-theme="dark"] .cv-scorer-panel {
+  background:
+    linear-gradient(180deg, rgba(10, 19, 34, 0.94), rgba(13, 24, 40, 0.9)),
+    linear-gradient(135deg, rgba(58, 134, 255, 0.18), rgba(0, 184, 148, 0.14));
+}
+
+body[data-theme="dark"] .cv-scorer-header {
+  border-bottom-color: var(--line);
+}
+
+body[data-theme="dark"] .cv-score-summary,
+body[data-theme="dark"] .cv-score-section {
+  background: rgba(15, 28, 46, 0.78);
+  border-color: var(--line);
+}
+
+.cv-score-card {
+  display: grid;
+  gap: 18px;
+}
+
+.cv-score-hero {
+  display: grid;
+  grid-template-columns: minmax(140px, 190px) 1fr;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.cv-score-number {
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.16), rgba(0, 184, 148, 0.16));
+  border: 1px solid rgba(58, 134, 255, 0.18);
+  box-shadow: var(--shadow-soft);
+}
+
+.cv-score-number strong {
+  font-size: clamp(2.6rem, 6vw, 4.4rem);
+  line-height: 1;
+  color: var(--accent-4);
+}
+
+.cv-score-number span {
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.cv-score-summary {
+  padding: 18px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid var(--line);
+}
+
+.cv-score-meter {
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(17, 32, 59, 0.08);
+  margin-top: 14px;
+}
+
+.cv-score-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff6b35, #ffb703, #00b894, #3a86ff);
+}
+
+.cv-score-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.cv-score-section {
+  border-radius: 22px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid var(--line);
+}
+
+.cv-score-section h4 {
+  margin: 0 0 10px;
+}
+
+.cv-score-section ul {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.6;
 }
 
 .rex-chat-messages {
@@ -2056,6 +2416,9 @@ a {
   .filter-grid,
   .detail-grid,
   .draft-grid,
+  .cv-scorer-header,
+  .cv-score-hero,
+  .cv-score-grid,
   .manual-grid {
     grid-template-columns: 1fr;
   }
@@ -2127,6 +2490,70 @@ a {
   background: rgba(255, 255, 255, 0.95);
   box-shadow: var(--shadow);
   padding: 24px;
+}
+
+@media (max-width: 640px) {
+  #limitModal {
+    padding: 10px;
+  }
+
+  #limitModal .limit-modal-card {
+    width: min(340px, 100%);
+    max-height: calc(100dvh - 20px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  #limitModal .limit-modal-card > h3 {
+    margin: 4px 0 8px;
+    font-size: 1.35rem;
+    line-height: 1.12;
+  }
+
+  #limitModal .limit-modal-card > .helper-text {
+    margin: 6px 0;
+    font-size: 0.8rem;
+    line-height: 1.3;
+  }
+
+  #limitModal .pricing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 10px 0;
+  }
+
+  #limitModal .pricing-card {
+    min-height: 98px;
+    border-radius: 14px;
+    padding: 10px;
+  }
+
+  #limitModal .pricing-card h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.15;
+  }
+
+  #limitModal .price-tag {
+    margin: 7px 0 4px;
+    font-size: 1.45rem;
+  }
+
+  #limitModal .price-tag span,
+  #limitModal .pricing-card .helper-text {
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
+
+  #limitModal .letter-controls {
+    margin-top: 8px;
+  }
+
+  #limitModalCloseBtn {
+    padding: 9px 14px;
+  }
 }
 
 .contact-us-fab {
@@ -2245,12 +2672,29 @@ a {
   line-height: 1;
 }
 
+.admin-days-btn:disabled {
+  cursor: wait;
+  opacity: 0.45;
+}
+
 .admin-user-actions .ghost-button,
 .admin-user-actions .small-button {
   width: auto;
   min-width: 112px;
   padding: 7px 10px;
   font-size: 0.76rem;
+}
+
+.admin-user-actions select {
+  width: auto;
+  min-width: 132px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 32, 59, 0.16);
+  background: rgba(255, 255, 255, 0.9);
+  color: #11203b;
+  font: 700 0.76rem/1.2 inherit;
+  box-shadow: 0 10px 24px rgba(36, 62, 110, 0.08);
 }
 
 .admin-generator-preview {
@@ -2646,4 +3090,277 @@ body[data-theme="dark"] .rex-question-bank-answer.empty-state {
   color: #6f4d1f;
   background: linear-gradient(180deg, rgba(255, 247, 237, 0.96), rgba(255, 251, 245, 0.98));
   border-color: rgba(217, 119, 6, 0.18);
+}
+
+/* Complete dark-mode pass: keep every pane, modal, result, and generated preview readable. */
+body[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body[data-theme="dark"] h1,
+body[data-theme="dark"] h2,
+body[data-theme="dark"] h3,
+body[data-theme="dark"] h4,
+body[data-theme="dark"] h5,
+body[data-theme="dark"] h6,
+body[data-theme="dark"] p,
+body[data-theme="dark"] label,
+body[data-theme="dark"] li,
+body[data-theme="dark"] summary,
+body[data-theme="dark"] .section-toggle,
+body[data-theme="dark"] .auth-title,
+body[data-theme="dark"] .card-label,
+body[data-theme="dark"] .job-title,
+body[data-theme="dark"] .history-panel h3,
+body[data-theme="dark"] .compact-title h3,
+body[data-theme="dark"] .cv-source-choice-copy strong,
+body[data-theme="dark"] .generated-option-copy strong,
+body[data-theme="dark"] .admin-letter-label,
+body[data-theme="dark"] .rex-question-bank-label {
+  color: var(--ink) !important;
+}
+
+body[data-theme="dark"] .hero-text,
+body[data-theme="dark"] .helper-text,
+body[data-theme="dark"] .auth-copy,
+body[data-theme="dark"] .job-meta,
+body[data-theme="dark"] .history-meta,
+body[data-theme="dark"] .scraper-meta,
+body[data-theme="dark"] .visa-job-meta,
+body[data-theme="dark"] .visa-job-ai-note,
+body[data-theme="dark"] .file-help,
+body[data-theme="dark"] .word-count-note,
+body[data-theme="dark"] .cover-letter-ready-note,
+body[data-theme="dark"] .option-helper-note,
+body[data-theme="dark"] .cv-source-choice-copy small {
+  color: var(--muted) !important;
+}
+
+body[data-theme="dark"] .auth-card,
+body[data-theme="dark"] .hero-copy,
+body[data-theme="dark"] .panel,
+body[data-theme="dark"] .result-card,
+body[data-theme="dark"] .history-card,
+body[data-theme="dark"] .cv-card,
+body[data-theme="dark"] .draft-panel,
+body[data-theme="dark"] .sponsor-card,
+body[data-theme="dark"] .scraper-card,
+body[data-theme="dark"] .cv-role-card,
+body[data-theme="dark"] .pricing-card,
+body[data-theme="dark"] .limit-modal-card,
+body[data-theme="dark"] .generator-preview-box,
+body[data-theme="dark"] .profile-file-note,
+body[data-theme="dark"] .selected-cv-name,
+body[data-theme="dark"] .cv-preview-snippet,
+body[data-theme="dark"] .paste-cv-pane,
+body[data-theme="dark"] .upload-status,
+body[data-theme="dark"] .summary-bar,
+body[data-theme="dark"] .generated-option-bar,
+body[data-theme="dark"] .bullet-accordion,
+body[data-theme="dark"] .rex-question-bank-panel {
+  background: linear-gradient(180deg, rgba(13, 24, 40, 0.96), rgba(8, 18, 32, 0.9)) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+  box-shadow: var(--shadow-soft);
+}
+
+body[data-theme="dark"] .cv-builder-panel,
+body[data-theme="dark"] .priority-panel,
+body[data-theme="dark"] .sponsor-search-panel,
+body[data-theme="dark"] .visa-jobs-panel,
+body[data-theme="dark"] .remote-jobs-panel,
+body[data-theme="dark"] .cv-scorer-panel,
+body[data-theme="dark"] .career-path-panel,
+body[data-theme="dark"] .interview-questions-panel,
+body[data-theme="dark"] .rex-chat-panel {
+  background:
+    linear-gradient(180deg, rgba(13, 24, 40, 0.97), rgba(8, 18, 32, 0.92)),
+    radial-gradient(circle at 0% 0%, rgba(58, 134, 255, 0.16), transparent 34%),
+    radial-gradient(circle at 100% 100%, rgba(0, 184, 148, 0.12), transparent 36%) !important;
+  border-color: rgba(187, 206, 235, 0.16) !important;
+}
+
+body[data-theme="dark"] .hero-card {
+  background:
+    linear-gradient(180deg, rgba(37, 99, 235, 0.94), rgba(20, 184, 166, 0.86)),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent) !important;
+  color: #f8fbff !important;
+}
+
+body[data-theme="dark"] .hero-card label,
+body[data-theme="dark"] .hero-card .job-meta,
+body[data-theme="dark"] .hero-card .file-help,
+body[data-theme="dark"] .hero-card .card-label,
+body[data-theme="dark"] .hero-card h2,
+body[data-theme="dark"] .hero-card p {
+  color: #f8fbff !important;
+}
+
+body[data-theme="dark"] textarea,
+body[data-theme="dark"] input,
+body[data-theme="dark"] select,
+body[data-theme="dark"] .admin-letter-textarea,
+body[data-theme="dark"] .letter-preview-textarea {
+  background: rgba(5, 13, 26, 0.96) !important;
+  border-color: rgba(187, 206, 235, 0.2) !important;
+  color: #f8fbff !important;
+  caret-color: #f8fbff;
+}
+
+body[data-theme="dark"] textarea::placeholder,
+body[data-theme="dark"] input::placeholder {
+  color: rgba(226, 236, 252, 0.58) !important;
+}
+
+body[data-theme="dark"] input[type="file"] {
+  color: var(--muted) !important;
+}
+
+body[data-theme="dark"] input[type="checkbox"],
+body[data-theme="dark"] input[type="radio"] {
+  accent-color: var(--accent-4);
+}
+
+body[data-theme="dark"] .ghost-button,
+body[data-theme="dark"] .theme-toggle-button,
+body[data-theme="dark"] .option-choice-button,
+body[data-theme="dark"] .cv-choose,
+body[data-theme="dark"] .cv-source-option,
+body[data-theme="dark"] .rex-upload-label,
+body[data-theme="dark"] .native-upload-label {
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.2), rgba(0, 184, 148, 0.12)) !important;
+  border-color: rgba(187, 206, 235, 0.18) !important;
+  color: var(--ink) !important;
+}
+
+body[data-theme="dark"] .primary-button,
+body[data-theme="dark"] .letter-mode-btn.active,
+body[data-theme="dark"] .option-choice-button.active {
+  color: #ffffff !important;
+}
+
+body[data-theme="dark"] .cv-source-choice-button,
+body[data-theme="dark"] .cv-source-choice-label {
+  background: linear-gradient(180deg, rgba(15, 28, 46, 0.98), rgba(8, 18, 32, 0.92)) !important;
+  border-color: rgba(187, 206, 235, 0.18) !important;
+  color: var(--ink) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+body[data-theme="dark"] .cv-source-choice-button.active,
+body[data-theme="dark"] .cv-source-choice-label.active {
+  background: linear-gradient(180deg, rgba(5, 52, 36, 0.96), rgba(9, 35, 35, 0.92)) !important;
+  border-color: rgba(110, 231, 183, 0.35) !important;
+}
+
+body[data-theme="dark"] .account-balance-pill,
+body[data-theme="dark"] .hero-chip,
+body[data-theme="dark"] .chip,
+body[data-theme="dark"] .sponsor-badge,
+body[data-theme="dark"] .fit-score,
+body[data-theme="dark"] .toggle-icon,
+body[data-theme="dark"] .price-tag span {
+  border-color: rgba(187, 206, 235, 0.18) !important;
+  background: rgba(15, 28, 46, 0.74) !important;
+  color: var(--ink) !important;
+}
+
+body[data-theme="dark"] .chip.good,
+body[data-theme="dark"] .auth-status.good,
+body[data-theme="dark"] .sponsor-status.match {
+  color: var(--good) !important;
+  background: rgba(6, 118, 71, 0.18) !important;
+  border-color: rgba(110, 231, 183, 0.24) !important;
+}
+
+body[data-theme="dark"] .chip.warn,
+body[data-theme="dark"] .auth-status.warn,
+body[data-theme="dark"] .sponsor-status.loading,
+body[data-theme="dark"] .sponsor-status.premium-lock {
+  color: var(--warn) !important;
+  background: rgba(180, 83, 9, 0.18) !important;
+  border-color: rgba(251, 191, 36, 0.25) !important;
+}
+
+body[data-theme="dark"] .chip.bad,
+body[data-theme="dark"] .auth-status.bad,
+body[data-theme="dark"] .sponsor-status.no-match {
+  color: var(--bad) !important;
+  background: rgba(180, 35, 24, 0.18) !important;
+  border-color: rgba(252, 165, 165, 0.25) !important;
+}
+
+body[data-theme="dark"] .auth-status.neutral,
+body[data-theme="dark"] .sponsor-status.neutral,
+body[data-theme="dark"] pre,
+body[data-theme="dark"] .rex-question-bank-answer.empty-state,
+body[data-theme="dark"] .admin-user-action-row td {
+  color: var(--ink) !important;
+  background: rgba(15, 28, 46, 0.72) !important;
+  border-color: var(--line) !important;
+}
+
+body[data-theme="dark"] .generated-cv-preview,
+body[data-theme="dark"] .generated-cv-document {
+  background: #081220 !important;
+  border-color: rgba(187, 206, 235, 0.16) !important;
+  color: var(--ink) !important;
+}
+
+body[data-theme="dark"] .generated-cv-header h2,
+body[data-theme="dark"] .generated-cv-contact-line,
+body[data-theme="dark"] .generated-cv-address-line,
+body[data-theme="dark"] .generated-cv-section-copy,
+body[data-theme="dark"] .generated-cv-role,
+body[data-theme="dark"] .generated-cv-profile,
+body[data-theme="dark"] .generated-cv-skills-line,
+body[data-theme="dark"] .generated-cv-role-heading-line,
+body[data-theme="dark"] .generated-cv-list,
+body[data-theme="dark"] .generated-cv-detail-list,
+body[data-theme="dark"] .generated-cv-list li {
+  color: var(--ink) !important;
+}
+
+body[data-theme="dark"] .generated-cv-kicker,
+body[data-theme="dark"] .generated-cv-section h3,
+body[data-theme="dark"] .generated-cv-list li::marker,
+body[data-theme="dark"] details summary,
+body[data-theme="dark"] a {
+  color: #7db2ff !important;
+}
+
+body[data-theme="dark"] .generated-cv-divider {
+  background: rgba(187, 206, 235, 0.22) !important;
+}
+
+body[data-theme="dark"] .bullet-accordion summary {
+  color: var(--ink) !important;
+  background: linear-gradient(135deg, rgba(15, 28, 46, 0.96), rgba(8, 18, 32, 0.88)) !important;
+}
+
+body[data-theme="dark"] .admin-table th,
+body[data-theme="dark"] .admin-table td {
+  color: var(--ink) !important;
+  border-bottom-color: var(--line) !important;
+}
+
+body[data-theme="dark"] .admin-days-value,
+body[data-theme="dark"] .admin-counter-value,
+body[data-theme="dark"] .admin-action-placeholder,
+body[data-theme="dark"] .letter-preview-disclaimer {
+  color: var(--muted) !important;
+}
+
+body[data-theme="dark"] .limit-modal {
+  background: rgba(0, 0, 0, 0.62) !important;
+}
+
+body[data-theme="dark"] .pane-locked-toggle .toggle-icon,
+body[data-theme="dark"] .premium-pane-locked .toggle-icon {
+  background: rgba(252, 165, 165, 0.14) !important;
+  color: var(--bad) !important;
+}
+
+body[data-theme="dark"] .premium-pane-locked {
+  border-color: rgba(252, 165, 165, 0.24) !important;
 }

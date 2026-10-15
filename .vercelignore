@@ -1,0 +1,10 @@
+sponsor_website_directory.json
+*.zip
+*.docx
+UPLOAD-THESE-FILES.txt
+.git
+java-service/target
+java-service/*.log
+api
+netlify
+.env*

@@ -1,105 +1,17 @@
-# Job Match Agent Web
+# Job Match Agent
 
-This is the browser-safe version of the app for free hosting and link sharing.
+Java 21 backend, Neon PostgreSQL, and the existing Vercel deployment at https://jobmatchagent.vercel.app.
 
-## What it does
+The current browser interface is preserved, including CV uploads, Word downloads, sponsor search, CV scoring, career planning, interview preparation, Rex, dark mode, and admin account controls.
 
-- starts with hosted sign up and sign in
-- accepts one or many pasted job adverts
-- scores each role against the selected CV
-- checks salary against your floor
-- flags likely sponsorship signals and red flags
-- suggests what to emphasise when tailoring your CV
-- checks company names against the bundled UK sponsor register snapshot
-- tracks free matches and free platform searches for monitoring
-- provides a separate admin URL for user monitoring
+- `vercel.json`: existing Vercel project's Java container routing.
+- `Dockerfile.vercel`: reproducible public-asset and Java build.
+- `java-service/src`: accounts, sessions, plans, usage, AI requests, and admin logic.
+- `java-service/README.md`: migration status, deployment steps, provider limitations, and rollback guidance.
+- Existing browser files: interface, document parsing, formatting, and client-side fallbacks.
 
-## Files to host
+Accounts and settings have been transferred to Neon. Existing passwords and verification emails temporarily use the old authentication service during migration. Do not delete the old Supabase project yet.
 
-Host everything in this folder:
+AI credentials are configured, but live provider probes currently report quota/credit/access errors. Configuration is not proof of successful generation. See the Java README for the exact checks and required provider action.
 
-- `index.html`
-- `app.html`
-- `admin.html`
-- `auth.js`
-- `app.js`
-- `admin.js`
-- `styles.css`
-- `uk_sponsors.js`
-- `netlify.toml`
-- `supabase-user-usage.sql`
-- `netlify/functions/nhs-values.js`
-- `netlify/functions/run-scraper.js`
-- `netlify/functions/admin-users.js`
-- `netlify/functions/record-usage.js`
-- `netlify/functions/send-signup-otp.js`
-- `netlify/functions/verify-signup-otp.js`
-- `netlify/functions/generate-cover-letter.js`
-
-## Important limitations
-
-This browser version:
-
-- does not directly connect to Indeed's private internal systems
-- does not include one-click sponsor list refresh
-- does not include desktop-only official website lookup
-- can fetch NHS Trust values live when deployed on Netlify with the included serverless function
-- uses direct platform search buttons for hosted browsing instead of uploaded scraper adapters
-- now expects hosted access through sign up/sign in before `app.html`
-
-## Supabase setup
-
-1. In Supabase SQL Editor, run:
-   - `supabase-user-usage.sql`
-2. In Supabase Auth, keep your passwordless email template configured the way you want.
-3. Keep your Supabase URL and anon key in the frontend files already wired here.
-4. Add your `SUPABASE_SERVICE_ROLE_KEY` only in Netlify environment variables, never in the frontend.
-
-## Netlify environment variables
-
-Add these before using the admin monitor:
-
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `ADMIN_DASHBOARD_SECRET`
-
-Add these to enable secure OpenAI-powered STAR cover letters on the hosted site:
-
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL` (optional, for example `gpt-4.1-mini`)
-
-## Admin monitor URL
-
-After deploy, open:
-
-- `/admin.html`
-
-Example:
-
-- `https://your-site.netlify.app/admin.html`
-
-The admin page shows:
-
-- user name
-- email
-- signup date
-- last sign in
-- free matches remaining
-- free searches remaining
-- plan status
-
-## Free hosting with Netlify
-
-1. Go to [Netlify](https://app.netlify.com/drop)
-2. Sign in or create a free account
-3. Open this folder:
-   `C:\Users\imasu\OneDrive\Desktop\office\job-agent\job-agent-web`
-4. Drag the entire folder contents into Netlify, including the `netlify` folder
-5. Netlify will publish the site and provision the functions
-6. Add the Netlify environment variables listed above
-7. Open the hosted root URL for normal users
-8. Open `/admin.html` for monitoring
-
-## Updating the hosted version later
-
-If you change the web files later, redeploy the same folder contents again so the admin page and functions stay in sync.
+Never upload database credentials, private environment files, `.vercel`, or session/signing secrets. The older Node/Netlify server files are migration reference only; Vercel uses the Java container configuration.

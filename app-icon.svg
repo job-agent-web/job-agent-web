@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Job Match Agent">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3a86ff"/>
+      <stop offset="0.55" stop-color="#00b894"/>
+      <stop offset="1" stop-color="#ff6b35"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#background)"/>
+  <rect x="96" y="148" width="320" height="238" rx="42" fill="#ffffff" opacity="0.96"/>
+  <path d="M196 148v-28c0-28 22-50 50-50h20c28 0 50 22 50 50v28h-34v-24c0-11-9-20-20-20h-12c-11 0-20 9-20 20v24z" fill="#11203b"/>
+  <path d="M96 230h320v54c-43 20-96 31-160 31S139 304 96 284z" fill="#eef4ff"/>
+  <rect x="229" y="252" width="54" height="42" rx="13" fill="#ffb703"/>
+  <path d="M188 352l42 42 94-104" fill="none" stroke="#067647" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

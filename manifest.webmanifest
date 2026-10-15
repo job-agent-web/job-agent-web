@@ -1,0 +1,23 @@
+{
+  "name": "Job Match Agent",
+  "short_name": "Job Match",
+  "id": "/",
+  "description": "Create tailored CVs and cover letters, find jobs, plan careers, prepare for interviews, and chat with Rex.",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "background_color": "#fff7ed",
+  "theme_color": "#11203b",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

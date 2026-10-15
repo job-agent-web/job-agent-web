@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Job Match Agent</title>
-  <link rel="stylesheet" href="./styles.css?v=20260514darkpanes01">
+  <link rel="stylesheet" href="./styles.css?v=20260712mobilepay01">
   <script>
     window.JOB_MATCH_LOCAL_UNLOCK_PREMIUM = false;
     if(typeof window.normalizeAccountPlanType !== "function"){
@@ -711,7 +711,7 @@
           </label>
           <label>
             Location
-            <input id="scraperLocation" type="text" value="United Kingdom" placeholder="United Kingdom">
+            <input id="scraperLocation" type="text" value="" placeholder="City, country, or Remote">
           </label>
         </div>
         <div class="platform-shortcuts hero-shortcuts">
@@ -782,6 +782,7 @@
             <label for="cvBuilderJobDescription">Job description</label>
             <div class="cover-letter-generate-wrap">
               <button id="generateCvBtn" class="primary-button" type="button">Generate CV</button>
+              <button id="generateCvCopilotBtn" class="ghost-button" type="button">Generate CV using ChatGPT</button>
               <button id="downloadCvDocxBtn" class="ghost-button" type="button" hidden>Download Word CV</button>
                 
             </div>
@@ -834,8 +835,6 @@
               <input id="profileUpload1" class="native-upload-input" type="file" accept=".docx,.pdf,application/pdf">
             </label>
           </div>
-          <div id="profileFile1" class="profile-file-note">Selected CV document: No CV selected yet.</div>
-          <div id="profileStatus1" class="upload-status"></div>
           <textarea id="candidateProfile1" class="hidden-profile" rows="14"></textarea>
           <input id="activeCv2" name="activeCv" type="radio" hidden>
           <input id="profileUpload2" class="file-picker-input" type="file" accept=".docx,.pdf,application/pdf">
@@ -870,10 +869,11 @@
             <label for="jobInput">Job description</label>
             <div class="cover-letter-generate-wrap">
               <button id="runMatchBtn" class="primary-button" type="button">Generate Cover Letter</button>
+              <button id="generateCoverLetterCopilotBtn" class="ghost-button" type="button">Generate Cover Letter using ChatGPT</button>
               <div id="coverLetterActionStatus" class="auth-status neutral cover-letter-action-status" hidden></div>
             </div>
           </div>
-          <textarea id="jobInput" rows="7" placeholder="Job Title: Data Analyst&#10;Company: Example Ltd&#10;Location: Remote, United Kingdom&#10;Salary: GBP 30,000 - GBP 35,000&#10;Description:&#10;We are looking for..."></textarea>
+          <textarea id="jobInput" rows="7" placeholder="Job Title: Data Analyst&#10;Company: Example Ltd&#10;Location: Remote&#10;Salary: 30,000 - 35,000&#10;Description:&#10;We are looking for..."></textarea>
         </div>
         <div id="summaryBar" class="summary-bar empty-state">
           Choose a CV option, enter the role details, and paste the job description to generate a tailored cover letter.
@@ -1219,21 +1219,21 @@
         <div class="pricing-grid">
           <article id="monthlyPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 10 pounds with Revolut" onclick="if(window.jobMatchOpenMonthlyPayment){return window.jobMatchOpenMonthlyPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=1000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
             <h3>Monthly</h3>
-            <p class="price-tag">�10</p>
+            <p class="price-tag">&pound;10</p>
           </article>
           <article id="sixMonthPaymentCard" class="pricing-card" role="button" tabindex="0" aria-label="Pay 50 pounds with Revolut" onclick="if(window.jobMatchOpenSixMonthPayment){return window.jobMatchOpenSixMonthPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=5000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
             <h3>6 Months</h3>
-            <p class="price-tag">�50</p>
+            <p class="price-tag">&pound;50</p>
             <p class="helper-text">Get 1 week free</p>
           </article>
           <article id="yearlyPaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 100 pounds with Revolut" onclick="if(window.jobMatchOpenYearlyPayment){return window.jobMatchOpenYearlyPayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=10000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
             <h3>Yearly</h3>
-            <p class="price-tag">�100</p>
+            <p class="price-tag">&pound;100</p>
             <p class="helper-text">Get one month free</p>
           </article>
           <article id="lifetimePaymentCard" class="pricing-card featured" role="button" tabindex="0" aria-label="Pay 200 pounds with Revolut" onclick="if(window.jobMatchOpenLifetimePayment){return window.jobMatchOpenLifetimePayment();}window.open('https://revolut.me/valourex?currency=GBP&amount=20000&note=Please%20replace%20this%20text%20with%20your%20Job%20Match%20Agent%20Username%20and%20Email','_blank','noopener');return false;">
             <h3>Premium Access (Lifetime)</h3>
-            <p class="price-tag">�200<span> one-off</span></p>
+            <p class="price-tag">&pound;200<span> one-off</span></p>
           </article>
         </div>
         <p class="helper-text">After payment, please allow a few minutes to update plan.</p>
@@ -2364,31 +2364,31 @@
           if(containsAny(lower, ["nursing","nurse","adult nursing","mental health nursing","children nursing","paediatric nursing","learning disability nursing","midwifery"])){ 
             track = "nursing and regulated clinical practice";
             steps = [
-              "Confirm the Nursing and Midwifery Council route for the nursing field you want, including approved degree, nursing degree apprenticeship, or return-to-practice options.",
-              "Check the entry requirements for adult, mental health, children, learning disability nursing, or midwifery, including GCSEs, Access to HE, A-levels, degree entry, or apprenticeship routes.",
-              "Plan for supervised placements, clinical hours, occupational health checks, DBS checks, English evidence, and professional registration requirements.",
+              "Confirm the accredited education, apprenticeship, or return-to-practice route recognised by the nursing regulator in the country where you plan to work.",
+              "Check the local entry requirements for adult, mental health, children, learning disability nursing, or midwifery, including the qualifications accepted by universities, employers, and the relevant regulator.",
+              "Plan for supervised placements, clinical hours, occupational-health checks, locally required background checks, language evidence, and professional registration requirements.",
               "Build safe clinical communication, infection prevention, safeguarding, escalation, medicines awareness, documentation, and person-centred care skills.",
               "Gain relevant exposure through healthcare assistant, care assistant, support worker, ward volunteer, bank staff, placement, or trainee nursing associate opportunities.",
               "Keep a reflective portfolio with placement feedback, competencies, care scenarios, training records, and examples of dignity, confidentiality, teamwork, and safe handover.",
-              "Follow NHS Trust recruitment pages, university nursing departments, NMC guidance, RCN resources, and local placement providers to understand current routes.",
-              "After qualification, complete NMC registration, preceptorship, and then build specialist evidence for acute care, community, theatre, mental health, children, public health, or advanced practice routes."
+              "Follow healthcare-employer recruitment pages, university nursing departments, the relevant nursing regulator, recognised professional associations, and placement providers to understand current routes.",
+              "After qualification, complete registration with the relevant local nursing regulator and supervised transition to practice, then build specialist evidence for acute care, community, theatre, mental health, children, public health, or advanced practice routes."
             ];
-            certifications = ["NMC-approved nursing degree or nursing degree apprenticeship", "Care Certificate or relevant healthcare assistant induction", "Basic Life Support, Safeguarding, Infection Prevention and Control, and Manual Handling training"];
-            channels = ["NHS Careers", "Royal College of Nursing", "Nursing and Midwifery Council", "Florence Academy"];
+            certifications = ["Locally accredited nursing degree or approved nursing apprenticeship", "Healthcare assistant induction or equivalent local foundation training", "Basic Life Support, Safeguarding, Infection Prevention and Control, and Manual Handling training"];
+            channels = ["RegisteredNurseRN", "Simple Nursing", "Florence Academy"];
           } else if(containsAny(lower, ["medical laboratory science","med lab science","medical lab science","biomedical science","biomedical scientist","laboratory scientist","medical laboratory","clinical laboratory","hcpc biomedical","pathology laboratory"])){ 
             track = "medical laboratory science and biomedical science";
             steps = [
-              "Check whether your target route needs an Institute of Biomedical Science accredited Biomedical Science degree, top-up modules, or another HCPC-approved route.",
-              "Map the route to HCPC registration, including the IBMS Registration Training Portfolio if you want to practise as a Biomedical Scientist in the UK.",
+              "Check which locally accredited Biomedical Science degree, top-up modules, supervised training, or regulator-approved route applies in the country where you plan to practise.",
+              "Map the route to supervised professional training and registration with the relevant regulator in the country where you plan to practise.",
               "Build core laboratory competence in sample handling, quality control, health and safety, microbiology, haematology, biochemistry, immunology, transfusion science, and accurate documentation.",
               "Strengthen scientific reporting, SOP compliance, data integrity, audit awareness, contamination control, equipment care, and communication with clinical teams.",
               "Look for medical laboratory assistant, specimen reception, pathology support, laboratory technician, trainee biomedical scientist, placement, or internship roles.",
               "Create a skills portfolio showing lab techniques, quality checks, SOPs followed, case reflections, audits, CPD, and placement competencies.",
-              "Follow NHS pathology networks, IBMS resources, HCPC guidance, hospital labs, and university biomedical science placement teams.",
-              "Progress towards HCPC registration, then specialise in haematology, microbiology, clinical biochemistry, histopathology, immunology, or transfusion science."
+              "Follow hospital laboratory networks, the relevant professional body and regulator, university placement teams, and recognised laboratory-science organisations.",
+              "Progress towards registration with the relevant local regulator where required, then specialise in haematology, microbiology, clinical biochemistry, histopathology, immunology, or transfusion science."
             ];
-            certifications = ["IBMS-accredited Biomedical Science degree or required top-up modules", "IBMS Registration Training Portfolio for HCPC Biomedical Scientist registration", "Good Clinical Laboratory Practice, COSHH, Quality Management, and Health and Safety training"];
-            channels = ["Institute of Biomedical Science", "NHS Health Careers", "Biomedical Science with Dr Chris", "Medicosis Perfectionalis"];
+            certifications = ["Locally accredited Biomedical Science degree or required top-up modules", "Supervised professional training portfolio and local registration requirements", "Good Clinical Laboratory Practice, Quality Management, and Health and Safety training"];
+            channels = ["Biomedical Science with Dr Chris", "Medicosis Perfectionalis"];
           } else if(containsAny(lower, ["public health","mph","health promotion","epidemiology","global health"])){ 
             track = "public health and population health";
             steps = [
@@ -2396,13 +2396,13 @@
               "Build knowledge of epidemiology, health inequalities, evaluation, behaviour change, safeguarding, health protection, and health policy.",
               "Develop needs assessment, data interpretation, stakeholder engagement, programme evaluation, report writing, and community engagement skills.",
               "Practise turning evidence into practical recommendations for services, prevention, and population outcomes.",
-              "Target health improvement assistant, public health project officer, research assistant, programme coordinator, NHS, charity, or local authority placement roles.",
+              "Target health improvement assistant, public health project officer, research assistant, programme coordinator, public healthcare, charity, government, or community placement roles.",
               "Keep a portfolio of needs assessments, reports, dashboards, literature summaries, project plans, and evaluation examples.",
-              "Follow Faculty of Public Health, UKHSA, local authority public health teams, NHS population health teams, and public health charities.",
+              "Follow recognised public-health associations, national or regional public-health agencies, community health teams, population-health services, and public-health charities.",
               "Progress into practitioner, analyst, programme manager, epidemiology, health protection, or specialist public health roles as your evidence grows."
             ];
             certifications = ["MPH or relevant public health postgraduate study where required", "Good Clinical Practice or research governance training for research-facing roles", "Evaluation, epidemiology, safeguarding, and health improvement short courses"];
-            channels = ["Faculty of Public Health", "UK Health Security Agency", "NHS Health Careers", "Global Health with Greg Martin"];
+            channels = ["World Health Organization", "Global Health with Greg Martin"];
           } else if(containsAny(lower, ["data analyst","business analyst","data","analytics","sql","bi","insight"])){ 
             track = "data and analytics";
             steps = [
@@ -2458,7 +2458,7 @@
               "Progress by adding stronger clinical or specialist competence while maintaining safe, person-centred practice."
             ];
             certifications = ["Care Certificate", "Basic Life Support (role dependent)", "Safeguarding and Manual Handling training"];
-            channels = ["NHS Careers", "Florence Academy", "Royal College of Nursing"];
+            channels = ["World Health Organization", "Florence Academy"];
           } else if(containsAny(lower, ["cyber","security analyst","cyber security","soc analyst","information security"])){
             track = "cyber security";
             steps = [
@@ -2739,7 +2739,7 @@
             var url = buildUrl(type);
             if(!url){return false;}
             if(openUrl(url)){
-              setStatus("Opened " + label + ".", true);
+              status.hidden = true; status.innerHTML = "";
             } else {
               setStatus("Could not open " + label + ".", false);
             }
@@ -2795,6 +2795,7 @@
           var stored = null;
           if(uploadedCv){
             uploadedCv.value = text || "";
+            if(text){ uploadedCv.setAttribute("data-upload-state", "ready"); }
             if(fileName){
               uploadedCv.setAttribute("data-file-name", fileName);
             }
@@ -2935,6 +2936,12 @@
             var fileName = getFileName(file, uploadInput);
             if(uploadRadio){ uploadRadio.checked = true; }
             if(generatedRadio){ generatedRadio.checked = false; }
+            if(uploadedCv){
+              uploadedCv.value = "";
+              uploadedCv.setAttribute("data-upload-state", "reading");
+              if(fileName){ uploadedCv.setAttribute("data-file-name", fileName); }
+            }
+            persistUploadedCv("", fileName);
             setFileLabel(fileName);
             setUploadStatus(fileName ? ("Reading " + fileName + "...") : "", "neutral");
             syncCards();
@@ -3724,7 +3731,8 @@
         function buildPrompt(userMessage){
           var lines = [
             "You are Rex, a polished interview coach inside Job Match Agent.",
-            "Write in polished UK English and behave like a strong interview coach rather than a general chatbot.",
+            "Write in polished professional English and behave like a strong interview coach rather than a general chatbot.",
+            "Serve users worldwide: mention a country only when the user or supplied material names it; otherwise keep the response geographically neutral.",
             "Prioritise interview preparation, mock interview support, answer improvement, confidence building, and role-specific coaching.",
             "Lead with the direct coaching point, then add practical detail, examples, and a stronger sample answer when useful.",
             "Be warm, clear, encouraging, and natural. Avoid sounding robotic or overly formal.",
@@ -4486,9 +4494,10 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   
     <script src="./ai-session-memory.js?v=20260417aiwhole11"></script>
-<script src="./app.js?v=20260514hideprovidererrors01"></script>
-    <script src="./career-path-library.js?v=20260429career1000b01"></script>
-    <script src="./cv-generator.js?v=20260514fallbackquality01"></script>
+  <script src="./app.js?v=20260715cvupload02"></script>
+<script src="./hosted-account-sync.js?v=20260712fdfplansync02"></script>
+  <script src="./career-path-library.js?v=20260713globalaudience01"></script>
+    <script src="./cv-generator.js?v=20260515noatskeywords01"></script>
     <script>
       (function(){
         function daysState(){

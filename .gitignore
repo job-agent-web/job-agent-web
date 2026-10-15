@@ -1,0 +1,4 @@
+.vercel
+.env*
+java-service/target/
+java-service/*.log
