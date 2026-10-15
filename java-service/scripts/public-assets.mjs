@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const publicFiles = ["index.html", "auth.html", "auth.js", "app.html", "app.js", "styles.css", "premium.css", "studio.css", "studio.js", "career-studio.svg", "admin.html", "admin-local.html", "admin.js", "cv-generator.js", "ai-session-memory.js", "assistant-ai.js", "career-path-library.js", "hosted-account-sync.js", "uk_sponsors.js", "sponsor_websites.js", "app-icon.svg", "app-install.js", "manifest.webmanifest", "sw.js"];
+export const publicFiles = ["index.html", "auth.html", "auth.js", "app.html", "app.js", "styles.css", "premium.css", "studio.css", "studio.js", "career-studio.svg", "career-hero-blue.png", "admin.html", "admin-local.html", "admin.js", "cv-generator.js", "ai-session-memory.js", "assistant-ai.js", "career-path-library.js", "hosted-account-sync.js", "uk_sponsors.js", "sponsor_websites.js", "app-icon.svg", "app-install.js", "manifest.webmanifest", "sw.js"];
 
 export function preparePublic(root, destination) {
   fs.mkdirSync(destination, { recursive: true });

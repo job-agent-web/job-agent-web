@@ -26,7 +26,7 @@ public final class Main implements AutoCloseable {
     private ExecutorService executor;
     private final ConcurrentHashMap<String, Deque<Instant>> authAttempts = new ConcurrentHashMap<>();
     private static final int MAX_BODY = 512 * 1024;
-    private static final Set<String> PUBLIC_FILES = Set.of("index.html", "auth.html", "auth.js", "app.html", "app.js", "styles.css", "premium.css", "studio.css", "studio.js", "career-studio.svg", "admin.html", "admin-local.html", "admin.js", "cv-generator.js", "ai-session-memory.js", "assistant-ai.js", "career-path-library.js", "hosted-account-sync.js", "uk_sponsors.js", "sponsor_websites.js", "app-icon.svg", "app-install.js", "manifest.webmanifest", "sw.js", "java-client.js");
+    private static final Set<String> PUBLIC_FILES = Set.of("index.html", "auth.html", "auth.js", "app.html", "app.js", "styles.css", "premium.css", "studio.css", "studio.js", "career-studio.svg", "career-hero-blue.png", "admin.html", "admin-local.html", "admin.js", "cv-generator.js", "ai-session-memory.js", "assistant-ai.js", "career-path-library.js", "hosted-account-sync.js", "uk_sponsors.js", "sponsor_websites.js", "app-icon.svg", "app-install.js", "manifest.webmanifest", "sw.js", "java-client.js");
     private static final Map<String, String> AI_PANES = Map.of("generate-cv", "pane1", "generate-cover-letter", "pane2", "search-results-insights", "pane3", "career-path-planner", "pane7", "generate-interview-questions", "pane8", "chat-with-rex", "pane9", "score-cv", "pane6");
     Main(Database db, Map<String, String> env, Path publicDirectory) throws Exception {
         this.db = db; this.env = env; this.publicDirectory = publicDirectory.toAbsolutePath().normalize();
@@ -292,7 +292,7 @@ public final class Main implements AutoCloseable {
         Path file = publicDirectory.resolve(path).normalize();
         if (!file.startsWith(publicDirectory) || !Files.isRegularFile(file)) throw new ApiException(404, "Page not found.");
         byte[] bytes = Files.readAllBytes(file);
-        String type = path.endsWith(".html") ? "text/html; charset=utf-8" : path.endsWith(".css") ? "text/css; charset=utf-8" : path.endsWith(".svg") ? "image/svg+xml" : path.endsWith(".webmanifest") ? "application/manifest+json" : "application/javascript; charset=utf-8";
+        String type = path.endsWith(".html") ? "text/html; charset=utf-8" : path.endsWith(".css") ? "text/css; charset=utf-8" : path.endsWith(".png") ? "image/png" : path.endsWith(".svg") ? "image/svg+xml" : path.endsWith(".webmanifest") ? "application/manifest+json" : "application/javascript; charset=utf-8";
         if (path.endsWith(".html")) {
             String html = new String(bytes, StandardCharsets.UTF_8);
             html = html.replaceFirst("(?i)<head>", "<head><script src=\"/java-client.js?v=20261015\"></script>");

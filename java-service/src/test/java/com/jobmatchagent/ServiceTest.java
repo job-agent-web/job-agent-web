@@ -25,6 +25,7 @@ class ServiceTest {
         Path assets = Files.createTempDirectory("jma-java-test-");
         Files.writeString(assets.resolve("app.html"), "<!DOCTYPE html><html><head></head><body>Existing interface</body></html>");
         Files.writeString(assets.resolve("java-client.js"), "/* test asset */");
+        Files.write(assets.resolve("career-hero-blue.png"), new byte[]{(byte)137,80,78,71});
         app = new Main(db, Map.of("SESSION_SIGNING_SECRET", SECRET, "ADMIN_DASHBOARD_SECRET", ADMIN, "ALLOW_LOCAL_HTTP", "true"), assets);
         db.transaction(c -> { app.accounts.create(c, "candidate@example.com", "Candidate", "test-password", "user"); return null; });
         app.start(0); base = "http://localhost:" + app.port();
@@ -32,6 +33,13 @@ class ServiceTest {
         assertFalse(token.isBlank());
     }
     @AfterEach void stop() { if (app != null) app.close(); }
+    @Test void heroImageIsServedAsAnImageWithoutExposingOtherFiles() throws Exception {
+        var image = client.send(HttpRequest.newBuilder(URI.create(base + "/career-hero-blue.png")).GET().build(), HttpResponse.BodyHandlers.ofByteArray());
+        assertEquals(200, image.statusCode());
+        assertEquals("image/png", image.headers().firstValue("Content-Type").orElse(""));
+        assertArrayEquals(new byte[]{(byte)137,80,78,71}, image.body());
+        assertEquals(404, request("GET", "/private-image.png", null, "").status());
+    }
     Response request(String method, String path, Object body, String bearer) throws Exception {
         HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(base + path)).timeout(Duration.ofSeconds(30)).header("Content-Type", "application/json");
         if (!bearer.isBlank()) builder.header("Authorization", "Bearer " + bearer);

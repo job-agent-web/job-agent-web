@@ -1,6 +1,6 @@
 FROM node:24-alpine AS frontend
 WORKDIR /source
-COPY index.html auth.html auth.js app.html app.js styles.css premium.css studio.css studio.js career-studio.svg admin.html admin-local.html admin.js cv-generator.js ai-session-memory.js assistant-ai.js career-path-library.js hosted-account-sync.js uk_sponsors.js sponsor_websites.js sponsor_websites.json app-icon.svg app-install.js manifest.webmanifest sw.js ./
+COPY index.html auth.html auth.js app.html app.js styles.css premium.css studio.css studio.js career-studio.svg career-hero-blue.png admin.html admin-local.html admin.js cv-generator.js ai-session-memory.js assistant-ai.js career-path-library.js hosted-account-sync.js uk_sponsors.js sponsor_websites.js sponsor_websites.json app-icon.svg app-install.js manifest.webmanifest sw.js ./
 COPY java-service/public/ ./java-service/public/
 COPY java-service/scripts/public-assets.mjs ./java-service/scripts/public-assets.mjs
 RUN node --input-type=module -e "import {preparePublic} from './java-service/scripts/public-assets.mjs'; preparePublic('/source', '/public');"
