@@ -101,6 +101,8 @@
   .app-download-status { font-size: 11px; }
   .platform-functions-card, .paywall-card { grid-column: 1 / -1; margin-top: 40px; background: transparent; border: 0; box-shadow: none; padding: 0; }
   .platform-functions-card h2, .paywall-card h2 { font-size: 26px; letter-spacing: -.6px; margin: 8px 0; }
+  .platform-functions-card :is(h2, .card-label), .paywall-card :is(h2, .card-label) { color: var(--ink); }
+  .platform-functions-card .helper-text, .paywall-card .helper-text { color: var(--muted); }
   .platform-functions-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
   .platform-function-pill { border-radius: 10px; padding: 20px; background: var(--panel); border: 1px solid var(--line); align-items: flex-start; box-shadow: none; }
   .platform-function-pill > span { background: var(--premium-soft); color: var(--accent-3); border: 0; border-radius: 7px; font-size: 12px; width: 32px; height: 32px; flex: 0 0 32px; }
